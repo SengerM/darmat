@@ -1,21 +1,21 @@
 import numpy as np
 import scipy.constants as const
 
-def SPDC_intensity_profile(r, lambda_pump, l, d, n_pump, n_signal, n_idler, alpha, amplitude=1):
+def SPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, n_idler, alpha, amplitude=1):
 	return np.sinc(np.pi*l/lambda_pump*
 					(
-					n_pump - alpha*n_signal*d/(d**2+r**2)**.5 
+					n_pump - alpha*n_signal*np.cos(theta) 
 					- n_idler*(
-								(1-alpha)**2 - alpha**2*n_signal**2/n_idler**2*r**2/(d**2+r**2)
+								(1-alpha)**2 - alpha**2*n_signal**2/n_idler**2*np.sin(theta)**2
 							  )**.5
 					)
 				  )**2
 
-def dSPDC_intensity_profile(r, lambda_pump, l, d, n_pump, n_signal, alpha, m):
+def dSPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, alpha, m):
 	omega_pump = 2*np.pi*const.c/lambda_pump
-	return np.sinc(np.pi*l/lambda_pump*(n_pump - alpha*n_signal*d/(d**2+r**2)**.5
+	return np.sinc(np.pi*l/lambda_pump*(n_pump - alpha*n_signal*np.cos(theta)
 				   - ((1-alpha)**2 - m**2*const.c**4/const.hbar**2/omega_pump**2
-				   - alpha**2*n_signal**2*r**2/(d**2+r**2))**.5))**2
+				   - alpha**2*n_signal**2*np.sin(theta)**2)**.5))**2
 
 if __name__ == '__main__':
 	import matplotlib.pyplot as plt
@@ -29,7 +29,7 @@ if __name__ == '__main__':
 	ALPHA = .5
 	DARK_PHOTON_MASS = 0
 	
-	r = np.linspace(0, .3, 99999)
+	theta = np.linspace(0, np.pi/2, 99999)
 
 	omega_pump = 2*np.pi*const.c/LAMBDA_PUMP
 	print('Cutoff angle dSPDC = ' + str(
@@ -38,12 +38,11 @@ if __name__ == '__main__':
 	print('Cutoff angle SPDC = ' + str(180/np.pi*np.arcsin((1-ALPHA)/ALPHA*N_SIGNAL/N_IDLER)))
 
 	fig, ax = plt.subplots()
-	ax.plot(np.arcsin(r/(D**2 + r**2)**.5)*180/np.pi,
+	ax.plot(theta*180/np.pi,
 			SPDC_intensity_profile(
-							  r,
+							  theta,
 							  lambda_pump = LAMBDA_PUMP,
 							  l = L,
-							  d = D,
 							  n_pump = N_PUMP,
 							  n_signal = N_SIGNAL,
 							  n_idler = N_IDLER,
@@ -51,12 +50,11 @@ if __name__ == '__main__':
 							),
 			label = 'SPDC'
 			)
-	ax.plot(np.arcsin(r/(D**2 + r**2)**.5)*180/np.pi,
+	ax.plot(theta*180/np.pi,
 			dSPDC_intensity_profile(
-							  r,
+							  theta,
 							  lambda_pump = LAMBDA_PUMP,
 							  l = L,
-							  d = D,
 							  n_pump = N_PUMP,
 							  n_signal = N_SIGNAL,
 							  alpha = ALPHA,
@@ -82,7 +80,7 @@ if __name__ == '__main__':
 		ax.plot(
 				theta_q*180/np.pi*np.array([1,1]),
 				[0, 1],
-				color = (0,0,0)
+				color = (0,0,.5)
 			   )
 	
 	theta_q_last = float('nan')
@@ -99,7 +97,7 @@ if __name__ == '__main__':
 		ax.plot(
 				theta_q*180/np.pi*np.array([1,1]),
 				[0, 1],
-				color = (0,0,0)
+				color = (.5,0,0)
 			   )
 	
 	plt.show()
