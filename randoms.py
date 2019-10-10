@@ -1,20 +1,6 @@
 import numpy as np
 from SPDC_dSPDC import SPDC_intensity_profile, dSPDC_intensity_profile
 
-class SPDC:
-	
-	def __init__(self, lambda_pump, crystal_l, n_pump, n_signal, n_idler, alpha):
-		slef.lambda_pump = lambda_pump
-		self.crystal_l = crystal_l
-		self.n_pump = n_pump
-		self.n_signal = n_signal
-		self.n_idler = n_idler
-		self.alpha = alpha
-		
-		self.theta_phasematch = (n_pump**2 + alpha**2*n_signal**2 - n_idler**2*(1-alpha)**2)/2/alpha/n_pump/n_signal
-		self.theta_phasematch = np.arccos(self.theta_phasematch) if self.theta_phasematch >= -1 and self.theta_phasematch <= 1 else float('nan')
-		self.theta_signal_cutoff = np.arcsin((1-alpha)/alpha*n_signal/n_idler)
-
 def _sample_with_boxes(f, xi, xf, y, N = 1):
 	i_choices = [i for i in range(len(xi))]
 	p_i = (xf - xi)*y/((xf - xi)*y).sum()

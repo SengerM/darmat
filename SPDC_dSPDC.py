@@ -15,17 +15,17 @@ def theta_phasematch_SPDC(lambda_pump, l, n_pump, n_signal, n_idler, alpha):
 	costheta = (n_pump**2 + alpha**2*n_signal**2 - n_idler**2*(1-alpha)**2)/2/alpha/n_pump/n_signal
 	return np.arccos(costheta) if costheta >= -1 and costheta <= 1 else float('nan')
 
+def theta_phasematch_dSPDC(lambda_pump, n_pump, n_signal, alpha, m):
+	omega_pump = 2*np.pi*const.c/lambda_pump
+	costheta = (n_pump**2 + alpha**2*n_signal**2 - (1-alpha)**2 + m**2*const.c**4/omega_pump**2/const.hbar**2)/2/alpha/n_pump/n_signal
+	return np.arccos(costheta) if costheta >= -1 and costheta <= 1 else float('nan')
+
 def theta_cutoff_SPDC(n_signal, n_idler, alpha):
 	return np.arcsin((1-alpha)/alpha*n_signal/n_idler)
 
 def theta_cutoff_dSPDC(lambda_pump, l, n_pump, n_signal, alpha, m):
 	omega_pump = 2*np.pi*const.c/lambda_pump
 	return np.arcsin(((1-alpha)**2 - m**2*const.c**4/omega_pump**2/const.hbar**2)**.5/alpha/n_signal)
-
-def theta_phasematch_dSPDC(lambda_pump, n_pump, n_signal, alpha, m):
-	omega_pump = 2*np.pi*const.c/lambda_pump
-	costheta = (n_pump**2 + alpha**2*n_signal**2 - (1-alpha)**2 + m**2*const.c**4/omega_pump**2/const.hbar**2)/2/alpha/n_pump/n_signal
-	return np.arccos(costheta) if costheta >= -1 and costheta <= 1 else float('nan')
 
 def dSPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, alpha, m):
 	omega_pump = 2*np.pi*const.c/lambda_pump
@@ -80,6 +80,32 @@ def dSPDC_zeros(lambda_pump, l, n_pump, n_signal, alpha, m, q_try = range(-300,3
 			break
 	return q_zeros, theta_zeros
 
+class SPDC:
+	
+	def __init__(self, lambda_pump, crystal_l, n_pump, n_signal, n_idler, alpha):
+		self.lambda_pump = lambda_pump
+		self.crystal_l = crystal_l # Nonlinear medium length.
+		self.n_pump = n_pump
+		self.n_signal = n_signal
+		self.n_idler = n_idler
+		self.alpha = alpha # Ratio of signal frequency to pump frequency, i.e. omega_signal/omega_pump.
+		
+		self.theta_phasematch = theta_phasematch_SPDC(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha)
+		self.theta_signal_cutoff = theta_cutoff_SPDC(self.n_signal, self.n_idler, self.alpha)
+		
+		self._zeros_theta = []
+		self._zeros_q = []
+	
+	def zeros(self, q_try = range(-300,300)):
+		if self._zeros_theta == [] or self._zeros_q == []:
+			q, theta = SPDC_zeros(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha, q_try)
+			self._zeros_theta = theta
+			self._zeros_q = q
+		return self._zeros_q, self._zeros_theta
+	
+	
+########################################################################
+
 if __name__ == '__main__':
 	import matplotlib.pyplot as plt
 	
@@ -110,7 +136,7 @@ if __name__ == '__main__':
 	q_zeros, theta_zeros = dSPDC_zeros(LAMBDA_PUMP, L, N_PUMP, N_SIGNAL, ALPHA, DARK_PHOTON_MASS)
 	for k,t in enumerate(theta_zeros):
 		ax.plot([t*180/np.pi]*2, [0,1], color = (1,.8,.8))
-		ax.text(t*180/np.pi, 1, str(q_zeros[k]), color = (1,.8,.8))
+		ax.text(t*180/np.pi, .8, str(q_zeros[k]), color = (1,.8,.8))
 	
 	ax.plot(
 			theta_phasematch_SPDC(LAMBDA_PUMP, L, N_PUMP, N_SIGNAL, N_IDLER, ALPHA)*180/np.pi*np.array([1,1]),
@@ -165,5 +191,31 @@ if __name__ == '__main__':
 	ax.set_xlabel('Signal angle (degrees)')
 	ax.set_ylabel(r'$\propto W_{12}$')
 	ax.legend()
+	fig.suptitle('Old technology')
+	
+	############
+	############
+	############
+	
+	spdc = SPDC(
+					lambda_pump = LAMBDA_PUMP, 
+					crystal_l = L, 
+					n_pump = N_PUMP, 
+					n_signal = N_SIGNAL, 
+					n_idler = N_IDLER, 
+					alpha = ALPHA
+				)
+	
+	fig, ax = plt.subplots()
+	
+	q_zeros, theta_zeros = spdc.zeros()
+	for k,t in enumerate(theta_zeros):
+		ax.plot([t*180/np.pi]*2, [0,1], color = (.8,.8,1))
+		ax.text(t*180/np.pi, 1, str(q_zeros[k]), color = (.8,.8,1))
+	
+	ax.set_xlabel('Signal angle (degrees)')
+	ax.set_ylabel(r'$\propto W_{12}$')
+	ax.legend()
+	fig.suptitle('New technology')
 	
 	plt.show()
