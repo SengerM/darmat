@@ -35,7 +35,7 @@ if __name__ == '__main__':
 	N_SIGNAL = 3
 	N_IDLER = N_SIGNAL
 	ALPHA = .5
-	DARK_PHOTON_MASS = 0
+	DARK_PHOTON_MASS = 1e-36
 	
 	theta = np.linspace(0, np.pi/2, 99999)
 
@@ -76,6 +76,8 @@ if __name__ == '__main__':
 	
 	theta_q_last = float('nan')
 	for q in range(-300,300):
+		if q == 0:
+			continue
 		xq = np.sqrt(
 			   1 - ((LAMBDA_PUMP/L*q/np.pi - N_PUMP)**2 + N_SIGNAL**2*ALPHA**2 - 
 			   N_IDLER**2*(1-ALPHA)**2)**2 /
@@ -93,9 +95,11 @@ if __name__ == '__main__':
 	
 	theta_q_last = float('nan')
 	for q in range(-200,100):
+		if q == 0:
+			continue
 		xq = np.sqrt(
 			   1 - ((LAMBDA_PUMP/L*q/np.pi - N_PUMP)**2 + N_SIGNAL**2*ALPHA**2 - 
-			   (1-ALPHA)**2 - DARK_PHOTON_MASS**2*const.c**4/omega_pump**2/const.hbar**2)**2 /
+			   (1-ALPHA)**2 + DARK_PHOTON_MASS**2*const.c**4/omega_pump**2/const.hbar**2)**2 /
 			   (4*N_SIGNAL**2*ALPHA**2*(LAMBDA_PUMP/L*q/np.pi - N_PUMP)**2)
 			  )
 		theta_q = np.arcsin(xq)
@@ -107,5 +111,16 @@ if __name__ == '__main__':
 				[0, 1],
 				color = (.5,0,0)
 			   )
+	
+	ax.plot(
+			theta_phasematch_SPDC(LAMBDA_PUMP, L, N_PUMP, N_SIGNAL, N_IDLER, ALPHA)*180/np.pi*np.array([1,1]),
+			[0, 1],
+			color = (0,0,0)
+		   )
+	ax.plot(
+			theta_phasematch_dSPDC(LAMBDA_PUMP, L, N_PUMP, N_SIGNAL, ALPHA, DARK_PHOTON_MASS, omega_pump)*180/np.pi*np.array([1,1]),
+			[0, 1],
+			color = (0,0,0)
+		   )
 	
 	plt.show()
