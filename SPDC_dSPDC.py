@@ -22,8 +22,9 @@ def theta_cutoff_dSPDC(lambda_pump, l, n_pump, n_signal, alpha, m):
 	omega_pump = 2*np.pi*const.c/lambda_pump
 	return np.arcsin(((1-alpha)**2 - m**2*const.c**4/omega_pump**2/const.hbar**2)**.5/alpha/n_signal)
 
-def theta_phasematch_dSPDC(lambda_pump, l, n_pump, n_signal, alpha, m, omega_pump):
-	costheta = (n_pump**2 + alpha**2*n_signal**2 - (1-alpha)**2 - m**2*const.c*4/omega_pump**2/const.hbar**2)/2/alpha/n_pump/n_signal
+def theta_phasematch_dSPDC(lambda_pump, n_pump, n_signal, alpha, m):
+	omega_pump = 2*np.pi*const.c/lambda_pump
+	costheta = (n_pump**2 + alpha**2*n_signal**2 - (1-alpha)**2 + m**2*const.c**4/omega_pump**2/const.hbar**2)/2/alpha/n_pump/n_signal
 	return np.arccos(costheta) if costheta >= -1 and costheta <= 1 else float('nan')
 
 def dSPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, alpha, m):
@@ -42,7 +43,7 @@ if __name__ == '__main__':
 	N_SIGNAL = 3
 	N_IDLER = N_SIGNAL
 	ALPHA = .5
-	DARK_PHOTON_MASS = 1.1e-36
+	DARK_PHOTON_MASS = 5e-37
 	
 	theta = np.linspace(0, np.pi/2, 99999)
 
@@ -50,7 +51,7 @@ if __name__ == '__main__':
 	print('Cutoff angle dSPDC = ' + str(180/np.pi*theta_cutoff_dSPDC(LAMBDA_PUMP, L, N_PUMP, N_SIGNAL, ALPHA, DARK_PHOTON_MASS)))
 	print('Cutoff angle SPDC = ' + str(180/np.pi*theta_cutoff_SPDC(N_SIGNAL, N_IDLER, ALPHA)))
 	
-	print('theta phasematch dSPDC = ' + str(theta_phasematch_dSPDC(LAMBDA_PUMP, L, N_PUMP, N_SIGNAL, ALPHA, DARK_PHOTON_MASS, omega_pump)*180/np.pi))
+	print('theta phasematch dSPDC = ' + str(theta_phasematch_dSPDC(LAMBDA_PUMP, N_PUMP, N_SIGNAL, ALPHA, DARK_PHOTON_MASS)*180/np.pi))
 	
 	fig, ax = plt.subplots()
 	theta_q_last = float('nan')
@@ -96,7 +97,7 @@ if __name__ == '__main__':
 			label = 'Phase matching angle'
 		   )
 	ax.plot(
-			theta_phasematch_dSPDC(LAMBDA_PUMP, L, N_PUMP, N_SIGNAL, ALPHA, DARK_PHOTON_MASS, omega_pump)*180/np.pi*np.array([1,1]),
+			theta_phasematch_dSPDC(LAMBDA_PUMP, N_PUMP, N_SIGNAL, ALPHA, DARK_PHOTON_MASS)*180/np.pi*np.array([1,1]),
 			[0, 1],
 			color = (0,.8,0)
 		   )
