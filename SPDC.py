@@ -42,7 +42,6 @@ def SPDC_zeros(lambda_pump, l, n_pump, n_signal, n_idler, alpha, q_try = range(-
 	return q_zeros, theta_zeros
 
 class SPDC:
-	
 	def __init__(self, lambda_pump, crystal_l, n_pump, n_signal, n_idler, alpha):
 		self.lambda_pump = lambda_pump
 		self.crystal_l = crystal_l # Nonlinear medium length.
@@ -64,76 +63,27 @@ class SPDC:
 			self._q_signal_zeros = q
 		return self._q_signal_zeros, self._theta_signal_zeros
 	
+	def intensity(self, theta_signal = None, amplitude=1):
+		if theta_signal == None:
+			q, theta_q = self.theta_signal_zeros()
+			if len(theta_q) >= 2:
+				zeros_distance = (np.diff(np.array(theta_q))).min()
+			theta_signal = np.linspace(0,self.theta_signal_cutoff,int(20*self.theta_signal_cutoff/zeros_distance))
+		return theta_signal, SPDC_intensity_profile(theta_signal, self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha, amplitude)
+	
 	
 ########################################################################
 
 if __name__ == '__main__':
 	import matplotlib.pyplot as plt
 	
-	LAMBDA_PUMP = 1000e-9
-	L = .007e-3
-	D = 10e-2
-	N_PUMP = 1.5
-	N_SIGNAL = 2.5
-	N_IDLER = N_SIGNAL
-	ALPHA = .5
-	
-	theta = np.linspace(0, np.pi/2, 99999)
-
-	omega_pump = 2*np.pi*const.c/LAMBDA_PUMP
-
-	print('Cutoff angle SPDC = ' + str(180/np.pi*theta_cutoff_SPDC(N_SIGNAL, N_IDLER, ALPHA)))
-	
-	fig, ax = plt.subplots()
-	
-	q_zeros, theta_zeros = SPDC_zeros(LAMBDA_PUMP, L, N_PUMP, N_SIGNAL, N_IDLER, ALPHA)
-	for k,t in enumerate(theta_zeros):
-		ax.plot([t*180/np.pi]*2, [0,1], color = (.8,.8,1))
-		ax.text(t*180/np.pi, 1, str(q_zeros[k]), color = (.8,.8,1))
-	
-	ax.plot(
-			theta_phasematch_SPDC(LAMBDA_PUMP, L, N_PUMP, N_SIGNAL, N_IDLER, ALPHA)*180/np.pi*np.array([1,1]),
-			[0, 1],
-			color = (0,.8,0),
-			label = 'Phase matching angle'
-		   )
-	ax.plot(
-			[180/np.pi*theta_cutoff_SPDC(N_SIGNAL, N_IDLER, ALPHA)]*2,
-			[0,1],
-			linestyle = '--',
-			color = (0,0,0),
-			label = 'Cutoff angle'
-		   )
-	
-	ax.plot(theta*180/np.pi,
-			SPDC_intensity_profile(
-							  theta,
-							  lambda_pump = LAMBDA_PUMP,
-							  l = L,
-							  n_pump = N_PUMP,
-							  n_signal = N_SIGNAL,
-							  n_idler = N_IDLER,
-							  alpha = ALPHA
-							),
-			label = 'SPDC'
-			)
-	
-	ax.set_xlabel('Signal angle (degrees)')
-	ax.set_ylabel(r'$\propto W_{12}$')
-	ax.legend()
-	fig.suptitle('Old technology')
-	
-	############
-	############
-	############
-	
 	spdc = SPDC(
-					lambda_pump = LAMBDA_PUMP, 
-					crystal_l = L, 
-					n_pump = N_PUMP, 
-					n_signal = N_SIGNAL, 
-					n_idler = N_IDLER, 
-					alpha = ALPHA
+					lambda_pump = 1000e-9, 
+					crystal_l = .007e-3, 
+					n_pump = 1.5, 
+					n_signal = 2.5, 
+					n_idler = 2.5, 
+					alpha = .6
 				)
 	
 	fig, ax = plt.subplots()
@@ -149,6 +99,20 @@ if __name__ == '__main__':
 			color = (0,.8,0),
 			label = 'Phase matching angle'
 		   )
+	
+	ax.plot(
+			[180/np.pi*spdc.theta_signal_cutoff]*2,
+			[0,1],
+			linestyle = '--',
+			color = (0,0,0),
+			label = 'Cutoff angle'
+		   )
+	
+	theta, intensity = spdc.intensity()
+	ax.plot(theta*180/np.pi,
+			intensity,
+			label = 'SPDC'
+			)
 	
 	ax.set_xlabel('Signal angle (degrees)')
 	ax.set_ylabel(r'$\propto W_{12}$')
