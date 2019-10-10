@@ -11,6 +11,14 @@ def SPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, n_idler, alp
 					)
 				  )**2
 
+def theta_phasematch_SPDC(lambda_pump, l, n_pump, n_signal, n_idler, alpha):
+	costheta = (n_pump**2 + alpha**2*n_signal**2 - n_idler**2*(1-alpha)**2)/2/alpha/n_pump/n_signal
+	return np.arccos(costheta) if costheta >= -1 and costheta <= 1 else float('nan')
+
+def theta_phasematch_dSPDC(lambda_pump, l, n_pump, n_signal, alpha, m, omega_pump):
+	costheta = (n_pump**2 + alpha**2*n_signal**2 - (1-alpha)**2 - m**2*const.c*4/omega_pump**2/const.hbar**2)/2/alpha/n_pump/n_signal
+	return np.arccos(costheta) if costheta >= -1 and costheta <= 1 else float('nan')
+
 def dSPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, alpha, m):
 	omega_pump = 2*np.pi*const.c/lambda_pump
 	return np.sinc(np.pi*l/lambda_pump*(n_pump - alpha*n_signal*np.cos(theta)
