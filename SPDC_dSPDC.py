@@ -2,8 +2,14 @@ import numpy as np
 import scipy.constants as const
 
 def SPDC_intensity_profile(r, lambda_pump, l, d, n_pump, n_signal, n_idler, alpha, amplitude=1):
-	return np.sinc(np.pi*l/lambda_pump*(n_pump - alpha*n_signal*d/(d**2+r**2)**.5 
-					- n_idler*((1-alpha)**2 - alpha**2*n_signal**2/n_idler**2*r**2/(d**2+r**2))**.5))**2
+	return np.sinc(np.pi*l/lambda_pump*
+					(
+					n_pump - alpha*n_signal*d/(d**2+r**2)**.5 
+					- n_idler*(
+								(1-alpha)**2 - alpha**2*n_signal**2/n_idler**2*r**2/(d**2+r**2)
+							  )**.5
+					)
+				  )**2
 
 def dSPDC_intensity_profile(r, lambda_pump, l, d, n_pump, n_signal, alpha, m):
 	omega_pump = 2*np.pi*const.c/lambda_pump
@@ -23,7 +29,7 @@ if __name__ == '__main__':
 	ALPHA = .5
 	DARK_PHOTON_MASS = 0
 	
-	r = np.linspace(0, .3, 999999)
+	r = np.linspace(0, .3, 99999)
 
 	omega_pump = 2*np.pi*const.c/LAMBDA_PUMP
 	print('Cutoff angle dSPDC = ' + str(
@@ -61,5 +67,39 @@ if __name__ == '__main__':
 	ax.set_xlabel('Signal angle (degrees)')
 	ax.set_ylabel(r'$\propto W_{12}$')
 	ax.legend()
+	
+	theta_q_last = float('nan')
+	for q in range(-300,300):
+		xq = np.sqrt(
+			   1 - ((LAMBDA_PUMP/L*q/np.pi - N_PUMP)**2 + N_SIGNAL**2*ALPHA**2 - 
+			   N_IDLER**2*(1-ALPHA)**2)**2 /
+			   (4*N_SIGNAL**2*ALPHA**2*(LAMBDA_PUMP/L*q/np.pi - N_PUMP)**2)
+			  )
+		theta_q = np.arcsin(xq)
+		if theta_q < theta_q_last:
+			break
+		theta_q_last = theta_q
+		ax.plot(
+				theta_q*180/np.pi*np.array([1,1]),
+				[0, 1],
+				color = (0,0,0)
+			   )
+	
+	theta_q_last = float('nan')
+	for q in range(-200,100):
+		xq = np.sqrt(
+			   1 - ((LAMBDA_PUMP/L*q/np.pi - N_PUMP)**2 + N_SIGNAL**2*ALPHA**2 - 
+			   (1-ALPHA)**2 - DARK_PHOTON_MASS**2*const.c**4/omega_pump**2/const.hbar**2)**2 /
+			   (4*N_SIGNAL**2*ALPHA**2*(LAMBDA_PUMP/L*q/np.pi - N_PUMP)**2)
+			  )
+		theta_q = np.arcsin(xq)
+		if theta_q < theta_q_last:
+			break
+		theta_q_last = theta_q
+		ax.plot(
+				theta_q*180/np.pi*np.array([1,1]),
+				[0, 1],
+				color = (0,0,0)
+			   )
 	
 	plt.show()
