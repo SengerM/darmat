@@ -51,18 +51,18 @@ class SPDC:
 		self.n_idler = n_idler
 		self.alpha = alpha # Ratio of signal frequency to pump frequency, i.e. omega_signal/omega_pump.
 		
-		self.theta_s_phasematch = theta_phasematch_SPDC(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha)
-		self.theta_s_cutoff = theta_cutoff_SPDC(self.n_signal, self.n_idler, self.alpha)
+		self.theta_signal_phasematch = theta_phasematch_SPDC(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha)
+		self.theta_signal_cutoff = theta_cutoff_SPDC(self.n_signal, self.n_idler, self.alpha)
 		
-		self._theta_s_zeros = []
-		self._q_s_zeros = []
+		self._theta_signal_zeros = []
+		self._q_signal_zeros = []
 	
-	def theta_s_zeros(self, q_try = range(-300,300)):
-		if self._theta_s_zeros == [] or self._q_s_zeros == []:
+	def theta_signal_zeros(self, q_try = range(-300,300)):
+		if self._theta_signal_zeros == [] or self._q_signal_zeros == []:
 			q, theta = SPDC_zeros(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha, q_try)
-			self._theta_s_zeros = theta
-			self._q_s_zeros = q
-		return self._q_s_zeros, self._theta_s_zeros
+			self._theta_signal_zeros = theta
+			self._q_signal_zeros = q
+		return self._q_signal_zeros, self._theta_signal_zeros
 	
 	
 ########################################################################
@@ -138,13 +138,13 @@ if __name__ == '__main__':
 	
 	fig, ax = plt.subplots()
 	
-	q_zeros, theta_zeros = spdc.theta_s_zeros()
+	q_zeros, theta_zeros = spdc.theta_signal_zeros()
 	for k,t in enumerate(theta_zeros):
 		ax.plot([t*180/np.pi]*2, [0,1], color = (.8,.8,1))
 		ax.text(t*180/np.pi, 1, str(q_zeros[k]), color = (.8,.8,1))
 	
 	ax.plot(
-			spdc.theta_s_phasematch*180/np.pi*np.array([1,1]),
+			spdc.theta_signal_phasematch*180/np.pi*np.array([1,1]),
 			[0, 1],
 			color = (0,.8,0),
 			label = 'Phase matching angle'
