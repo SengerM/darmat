@@ -1,7 +1,6 @@
 import numpy as np
-from SPDC_dSPDC import SPDC_intensity_profile, dSPDC_intensity_profile
 
-def _sample_with_boxes(f, xi, xf, y, N = 1):
+def sample_with_boxes(f, xi, xf, y, N = 1):
 	i_choices = [i for i in range(len(xi))]
 	p_i = (xf - xi)*y/((xf - xi)*y).sum()
 	samples = []
@@ -27,7 +26,7 @@ if __name__ == '__main__':
 	x_axis = np.linspace(-2,2,999)
 	ax.plot(x_axis, [f(x) for x in x_axis])
 	
-	samples = _sample_with_boxes(f, 
+	samples = sample_with_boxes(f, 
 								xi = np.array([0, .5]), 
 								xf = np.array([.5, 1]),
 								y = np.array([f(0), f(.5)]),
