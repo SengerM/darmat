@@ -103,7 +103,7 @@ if __name__ == '__main__':
 					n_pump = 1.5, 
 					n_signal = 2.5, 
 					n_idler = 2.5, 
-					alpha = .5
+					alpha = .6
 				)
 	
 	fig, ax = plt.subplots()
@@ -143,9 +143,9 @@ if __name__ == '__main__':
 	fig.suptitle('Samples')
 	ax.set_xlabel(r'$\theta_s$')
 	ax.hist(
-			np.array(spdc.samples(99999))*180/np.pi,
+			np.array(spdc.samples(9999))*180/np.pi,
 			bins = 'auto',
-			density = True
 		   )
+	ax.set_yscale('log')
 	
 	plt.show()
