@@ -17,7 +17,7 @@ def theta_phasematch_SPDC(lambda_pump, l, n_pump, n_signal, n_idler, alpha):
 	return np.arccos(costheta) if costheta >= -1 and costheta <= 1 else float('nan')
 
 def theta_cutoff_SPDC(n_signal, n_idler, alpha):
-	return np.arcsin((1-alpha)/alpha*n_signal/n_idler)
+	return np.arcsin((1-alpha)/alpha*n_idler/n_signal)
 
 def SPDC_zeros(lambda_pump, l, n_pump, n_signal, n_idler, alpha, q_try = range(-300,300)):
 	theta_zeros = []
