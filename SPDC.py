@@ -56,7 +56,6 @@ class SPDC:
 		
 		self._theta_signal_zeros = []
 		self._q_signal_zeros = []
-		
 	
 	def theta_signal_zeros(self, q_try = range(-300,300)):
 		if self._theta_signal_zeros == [] or self._q_signal_zeros == []:
@@ -90,7 +89,6 @@ class SPDC:
 											  ), 
 								  N = n_samples
 								)
-	
 	
 ########################################################################
 
