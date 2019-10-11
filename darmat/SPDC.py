@@ -75,9 +75,9 @@ class SPDC:
 			theta_signal = np.linspace(0,max_theta,int(max_theta/step_theta))
 		return theta_signal, SPDC_intensity_profile(theta_signal, self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha, amplitude)
 	
-	def samples(self, n_samples=1):
+	def signal_samples(self, n_samples=1):
 		q, theta = self.theta_signal_zeros()
-		return sample_with_boxes(
+		theta_signal_samples = sample_with_boxes(
 								  f = lambda x: self.intensity(x)[1],
 								  xi = np.array([theta[k] for k in range(len(theta)-1)]), 
 								  xf = np.array([theta[k+1] for k in range(len(theta)-1)]), 
@@ -89,64 +89,8 @@ class SPDC:
 											  ), 
 								  N = n_samples
 								)
+		phi_signal_samples = np.random.rand(n_samples)*2*np.pi
+		return phi_signal_samples, theta_signal_samples
 	
 	def theta_idler(self, theta_signal):
 		return np.arcsin(self.alpha/(1-self.alpha)*self.n_signal/self.n_idler*np.sin(theta_signal))
-	
-########################################################################
-
-if __name__ == '__main__':
-	import matplotlib.pyplot as plt
-	
-	spdc = SPDC(
-					lambda_pump = 1000e-9, 
-					crystal_l = .007e-3, 
-					n_pump = 1.5, 
-					n_signal = 2.5, 
-					n_idler = 2.5, 
-					alpha = .6
-				)
-	
-	fig, ax = plt.subplots()
-	
-	q_zeros, theta_zeros = spdc.theta_signal_zeros()
-	for k,t in enumerate(theta_zeros):
-		ax.plot([t*180/np.pi]*2, [0,1], color = (.8,.8,1))
-		ax.text(t*180/np.pi, 1, str(q_zeros[k]), color = (.8,.8,1))
-	
-	ax.plot(
-			spdc.theta_signal_phasematch*180/np.pi*np.array([1,1]),
-			[0, 1],
-			color = (0,.8,0),
-			label = 'Phase matching angle'
-		   )
-	
-	ax.plot(
-			[180/np.pi*spdc.theta_signal_cutoff]*2,
-			[0,1],
-			linestyle = '--',
-			color = (0,0,0),
-			label = 'Cutoff angle'
-		   )
-	
-	theta, intensity = spdc.intensity()
-	ax.plot(theta*180/np.pi,
-			intensity,
-			label = 'SPDC'
-			)
-	
-	ax.set_xlabel('Signal angle (degrees)')
-	ax.set_ylabel(r'$\propto W_{12}$')
-	ax.legend()
-	fig.suptitle('New technology')
-	
-	fig, ax = plt.subplots()
-	fig.suptitle('Samples')
-	ax.set_xlabel(r'$\theta_s$')
-	ax.hist(
-			np.array(spdc.samples(9999))*180/np.pi,
-			bins = 'auto',
-		   )
-	ax.set_yscale('log')
-	
-	plt.show()
