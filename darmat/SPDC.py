@@ -90,6 +90,9 @@ class SPDC:
 								  N = n_samples
 								)
 	
+	def theta_idler(self, theta_signal):
+		return np.arcsin(self.alpha/(1-self.alpha)*self.n_signal/self.n_idler*np.sin(theta_signal))
+	
 ########################################################################
 
 if __name__ == '__main__':

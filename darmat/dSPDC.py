@@ -88,7 +88,10 @@ class dSPDC:
 											  ), 
 								  N = n_samples
 								)
-
+	
+	def theta_idler(self, theta_signal):
+		omega_pump = 2*np.pi*const.c/self.lambda_pump
+		return np.arcsin(self.alpha*self.n_signal/np.sqrt((1-self.alpha)**2 - self.dark_photon_mass**2*const.c**4/omega_pump**2/const.hbar**2)*np.sin(theta_signal))
 
 ########################################################################
 
