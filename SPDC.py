@@ -65,11 +65,14 @@ class SPDC:
 	
 	def intensity(self, theta_signal = None, amplitude=1):
 		if theta_signal == None:
+			max_theta = self.theta_signal_cutoff if not np.isnan(self.theta_signal_cutoff) else np.pi
 			q, theta_q = self.theta_signal_zeros()
 			if len(theta_q) >= 2:
-				zeros_distance = (np.diff(np.array(theta_q))).min()
-			theta_signal = np.linspace(0,self.theta_signal_cutoff,int(20*self.theta_signal_cutoff/zeros_distance))
-		return theta_signal, SPDC_intensity_profile(theta_signal, self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha, amplitude)
+				step_theta = (np.diff(np.array(theta_q))).min()/20
+			else:
+				step_theta = max_theta/100
+			theta_values = np.linspace(0,max_theta,int(max_theta/step_theta))
+		return theta_values, SPDC_intensity_profile(theta_values, self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha, amplitude)
 	
 	
 ########################################################################
@@ -83,7 +86,7 @@ if __name__ == '__main__':
 					n_pump = 1.5, 
 					n_signal = 2.5, 
 					n_idler = 2.5, 
-					alpha = .6
+					alpha = .3
 				)
 	
 	fig, ax = plt.subplots()
