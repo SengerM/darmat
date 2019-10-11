@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.constants as const
-from darmat_rand import sample_with_boxes
+from .darmat_rand import sample_with_boxes
 
 def SPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, n_idler, alpha, amplitude=1):
 	return np.sinc(np.pi*l/lambda_pump*
