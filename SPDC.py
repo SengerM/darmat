@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.constants as const
+from darmat_rand import sample_with_boxes
 
 def SPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, n_idler, alpha, amplitude=1):
 	return np.sinc(np.pi*l/lambda_pump*
@@ -36,8 +37,8 @@ def SPDC_zeros(lambda_pump, l, n_pump, n_signal, n_idler, alpha, q_try = range(-
 		if len(theta_zeros) == 1:
 			continue
 		if theta_zeros[-1] < theta_zeros[-2]: # This means that we are no longer finding zeros
-			theta_zeros = theta_zeros[:-2]
-			q_zeros = q_zeros[:-2]
+			theta_zeros = theta_zeros[:-1]
+			q_zeros = q_zeros[:-1]
 			break
 	return q_zeros, theta_zeros
 
@@ -55,6 +56,7 @@ class SPDC:
 		
 		self._theta_signal_zeros = []
 		self._q_signal_zeros = []
+		
 	
 	def theta_signal_zeros(self, q_try = range(-300,300)):
 		if self._theta_signal_zeros == [] or self._q_signal_zeros == []:
@@ -64,15 +66,30 @@ class SPDC:
 		return self._q_signal_zeros, self._theta_signal_zeros
 	
 	def intensity(self, theta_signal = None, amplitude=1):
-		if theta_signal == None:
+		if theta_signal is None:
 			max_theta = self.theta_signal_cutoff if not np.isnan(self.theta_signal_cutoff) else np.pi
 			q, theta_q = self.theta_signal_zeros()
 			if len(theta_q) >= 2:
 				step_theta = (np.diff(np.array(theta_q))).min()/20
 			else:
 				step_theta = max_theta/100
-			theta_values = np.linspace(0,max_theta,int(max_theta/step_theta))
-		return theta_values, SPDC_intensity_profile(theta_values, self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha, amplitude)
+			theta_signal = np.linspace(0,max_theta,int(max_theta/step_theta))
+		return theta_signal, SPDC_intensity_profile(theta_signal, self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha, amplitude)
+	
+	def samples(self, n_samples=1):
+		q, theta = self.theta_signal_zeros()
+		return sample_with_boxes(
+								  f = lambda x: self.intensity(x)[1],
+								  xi = np.array([theta[k] for k in range(len(theta)-1)]), 
+								  xf = np.array([theta[k+1] for k in range(len(theta)-1)]), 
+								  y = np.array(
+												[
+													self.intensity(np.linspace(theta[k],theta[k+1]))[1].max()*1.1
+													for k in range(len(theta)-1)
+												]
+											  ), 
+								  N = n_samples
+								)
 	
 	
 ########################################################################
@@ -86,7 +103,7 @@ if __name__ == '__main__':
 					n_pump = 1.5, 
 					n_signal = 2.5, 
 					n_idler = 2.5, 
-					alpha = .3
+					alpha = .5
 				)
 	
 	fig, ax = plt.subplots()
@@ -121,5 +138,14 @@ if __name__ == '__main__':
 	ax.set_ylabel(r'$\propto W_{12}$')
 	ax.legend()
 	fig.suptitle('New technology')
+	
+	fig, ax = plt.subplots()
+	fig.suptitle('Samples')
+	ax.set_xlabel(r'$\theta_s$')
+	ax.hist(
+			np.array(spdc.samples(99999))*180/np.pi,
+			bins = 'auto',
+			density = True
+		   )
 	
 	plt.show()
