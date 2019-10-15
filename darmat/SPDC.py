@@ -66,7 +66,7 @@ class SPDC:
 	
 	def signal_intensity(self, theta_signal = None, amplitude=1):
 		if theta_signal is None:
-			max_theta = self.theta_signal_cutoff if not np.isnan(self.theta_signal_cutoff) else np.pi
+			max_theta = self.theta_signal_cutoff if not np.isnan(self.theta_signal_cutoff) else np.pi/2
 			q, theta_q = self.theta_signal_zeros()
 			if len(theta_q) >= 2:
 				step_theta = (np.diff(np.array(theta_q))).min()/20
@@ -75,8 +75,12 @@ class SPDC:
 			theta_signal = np.linspace(0,max_theta,int(max_theta/step_theta))
 		return theta_signal, SPDC_intensity_profile(theta_signal, self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha, amplitude)
 	
-	def idler_intensity(self, theta_idler, amplitude=1):
-		_, intensity = self.signal_intensity(theta_signal = np.arcsin((1-self.alpha)*self.n_idler/self.alpha/self.n_signal*np.sin(theta_idler)), amplitude = amplitude)
+	def idler_intensity(self, theta_idler=None, amplitude=1):
+		if theta_idler is None:
+			theta_idler,_ = self.signal_intensity()
+		theta_idler[theta_idler<0] = float('nan')
+		theta_idler[theta_idler>np.pi/2] = float('nan')
+		_,intensity = self.signal_intensity(theta_signal = np.arcsin((1-self.alpha)*self.n_idler/self.alpha/self.n_signal*np.sin(theta_idler)), amplitude = amplitude)
 		return theta_idler, intensity
 	
 	def signal_samples(self, n_samples=1):

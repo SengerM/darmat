@@ -65,7 +65,7 @@ class dSPDC:
 	
 	def signal_intensity(self, theta_signal = None, amplitude=1):
 		if theta_signal is None:
-			max_theta = self.theta_signal_cutoff if not np.isnan(self.theta_signal_cutoff) else np.pi
+			max_theta = self.theta_signal_cutoff if not np.isnan(self.theta_signal_cutoff) else np.pi/2
 			q, theta_q = self.theta_signal_zeros()
 			if len(theta_q) >= 2:
 				step_theta = (np.diff(np.array(theta_q))).min()/20
