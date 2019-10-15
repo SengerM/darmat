@@ -26,11 +26,10 @@ def SPDC_zeros(lambda_pump, l, n_pump, n_signal, n_idler, alpha, q_try = range(-
 	for q in q_try:
 		if q == 0:
 			continue
-		xq = np.sqrt(
-			   1 - ((lambda_pump/l*q/np.pi - n_pump)**2 + n_signal**2*alpha**2 - 
-			   n_idler**2*(1-alpha)**2)**2 /
-			   (4*n_signal**2*alpha**2*(lambda_pump/l*q/np.pi - n_pump)**2)
-			  )
+		radicando = 1 - ((lambda_pump/l*q/np.pi - n_pump)**2 + n_signal**2*alpha**2 - n_idler**2*(1-alpha)**2)**2/(4*n_signal**2*alpha**2*(lambda_pump/l*q/np.pi - n_pump)**2)
+		if radicando < 0:
+			continue
+		xq = np.sqrt(radicando)
 		if xq < -1 or xq > 1 or np.isnan(xq):
 			continue
 		theta_zeros.append(np.arcsin(xq))
