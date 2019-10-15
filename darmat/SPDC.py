@@ -93,15 +93,16 @@ class SPDC:
 		return theta_idler, intensity
 	
 	def signal_samples(self, n_samples=1):
-		q, theta = self.theta_signal_zeros()
+		_, theta_zeros = self.theta_signal_zeros()
 		theta_signal_samples = sample_with_boxes(
 								  f = lambda x: self.signal_intensity(x)[1],
-								  xi = np.array([theta[k] for k in range(len(theta)-1)]), 
-								  xf = np.array([theta[k+1] for k in range(len(theta)-1)]), 
+								  xi = np.array([0] + [theta_zeros[k] for k in range(len(theta_zeros)-1)]), 
+								  xf = np.array([theta_zeros[k] for k in range(len(theta_zeros))]), 
 								  y = np.array(
+												[self.signal_intensity(np.linspace(0,theta_zeros[0]))[1].max()*1.1] + 
 												[
-													self.signal_intensity(np.linspace(theta[k],theta[k+1]))[1].max()*1.1
-													for k in range(len(theta)-1)
+													self.signal_intensity(np.linspace(theta_zeros[k],theta_zeros[k+1]))[1].max()*1.1
+													for k in range(len(theta_zeros)-1)
 												]
 											  ), 
 								  N = n_samples
