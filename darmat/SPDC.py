@@ -45,6 +45,15 @@ def SPDC_zeros(lambda_pump, l, n_pump, n_signal, n_idler, alpha, q_try = range(-
 
 class SPDC:
 	def __init__(self, lambda_pump, crystal_l, n_pump, n_signal, n_idler, alpha):
+		if n_pump < 0 or n_signal < 0 or n_idler < 0:
+			raise ValueError('Negative refractive index received! I do not support this...')
+		if alpha < 0 or alpha > 1:
+			raise ValueError('The value of "alpha" must be between 0 and 1 (by definition of alpha).')
+		if crystal_l < 0:
+			raise ValueError('The value of "crystal_l" must be positive.')
+		if lambda_pump < 0:
+			raise ValueError('The value of "lambda_pump" must be positive.')
+		
 		self.lambda_pump = lambda_pump
 		self.crystal_l = crystal_l # Nonlinear medium length.
 		self.n_pump = n_pump
