@@ -9,7 +9,8 @@ def theta_phasematch_dSPDC(lambda_pump, n_pump, n_signal, alpha, m):
 
 def theta_cutoff_dSPDC(lambda_pump, l, n_pump, n_signal, alpha, m):
 	omega_pump = 2*np.pi*const.c/lambda_pump
-	return np.arcsin(((1-alpha)**2 - m**2*const.c**4/omega_pump**2/const.hbar**2)**.5/alpha/n_signal)
+	arg = ((1-alpha)**2 - m**2*const.c**4/omega_pump**2/const.hbar**2)**.5/alpha/n_signal
+	return np.arcsin(arg) if arg <= 1 else float('nan')
 
 def dSPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, alpha, m):
 	omega_pump = 2*np.pi*const.c/lambda_pump
@@ -77,12 +78,12 @@ class dSPDC:
 	def signal_samples(self, n_samples=1):
 		q, theta = self.theta_signal_zeros()
 		theta_signal_samples = sample_with_boxes(
-								  f = lambda x: self.intensity(x)[1],
+								  f = lambda x: self.signal_intensity(x)[1],
 								  xi = np.array([theta[k] for k in range(len(theta)-1)]), 
 								  xf = np.array([theta[k+1] for k in range(len(theta)-1)]), 
 								  y = np.array(
 												[
-													self.intensity(np.linspace(theta[k],theta[k+1]))[1].max()*1.1
+													self.signal_intensity(np.linspace(theta[k],theta[k+1]))[1].max()*1.1
 													for k in range(len(theta)-1)
 												]
 											  ), 
