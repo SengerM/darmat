@@ -44,6 +44,17 @@ def dSPDC_zeros(lambda_pump, l, n_pump, n_signal, alpha, m, q_try = range(-300,3
 
 class dSPDC:
 	def __init__(self, lambda_pump, crystal_l, n_pump, n_signal, alpha, dark_photon_mass):
+		if n_pump < 0 or n_signal < 0:
+			raise ValueError('Negative refractive index received! I do not support this...')
+		if crystal_l < 0:
+			raise ValueError('The value of "crystal_l" must be positive.')
+		if lambda_pump < 0:
+			raise ValueError('The value of "lambda_pump" must be positive.')
+		if dark_photon_mass < 0:
+			raise ValueError('The mass of the dark photon must be possitive!')
+		if alpha < 0 or alpha > 1 - const.c**2*dark_photon_mass/const.hbar/(2*np.pi*const.c/lambda_pump):
+			raise ValueError('The value of "alpha" must be between 0 and "1 - c**2*m/hbar/omega_pump" (by definition of alpha).')
+		
 		self.lambda_pump = lambda_pump
 		self.crystal_l = crystal_l # Nonlinear medium length.
 		self.n_pump = n_pump
