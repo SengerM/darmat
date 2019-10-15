@@ -63,7 +63,7 @@ class dSPDC:
 			self._q_signal_zeros = q
 		return self._q_signal_zeros, self._theta_signal_zeros
 	
-	def intensity(self, theta_signal = None, amplitude=1):
+	def signal_intensity(self, theta_signal = None, amplitude=1):
 		if theta_signal is None:
 			max_theta = self.theta_signal_cutoff if not np.isnan(self.theta_signal_cutoff) else np.pi
 			q, theta_q = self.theta_signal_zeros()

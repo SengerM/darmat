@@ -64,7 +64,7 @@ class SPDC:
 			self._q_signal_zeros = q
 		return self._q_signal_zeros, self._theta_signal_zeros
 	
-	def intensity(self, theta_signal = None, amplitude=1):
+	def signal_intensity(self, theta_signal = None, amplitude=1):
 		if theta_signal is None:
 			max_theta = self.theta_signal_cutoff if not np.isnan(self.theta_signal_cutoff) else np.pi
 			q, theta_q = self.theta_signal_zeros()
@@ -75,15 +75,19 @@ class SPDC:
 			theta_signal = np.linspace(0,max_theta,int(max_theta/step_theta))
 		return theta_signal, SPDC_intensity_profile(theta_signal, self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.n_idler, self.alpha, amplitude)
 	
+	def idler_intensity(self, theta_idler, amplitude=1):
+		_, intensity = self.signal_intensity(theta_signal = np.arcsin((1-self.alpha)*self.n_idler/self.alpha/self.n_signal*np.sin(theta_idler)), amplitude = amplitude)
+		return theta_idler, intensity
+	
 	def signal_samples(self, n_samples=1):
 		q, theta = self.theta_signal_zeros()
 		theta_signal_samples = sample_with_boxes(
-								  f = lambda x: self.intensity(x)[1],
+								  f = lambda x: self.signal_intensity(x)[1],
 								  xi = np.array([theta[k] for k in range(len(theta)-1)]), 
 								  xf = np.array([theta[k+1] for k in range(len(theta)-1)]), 
 								  y = np.array(
 												[
-													self.intensity(np.linspace(theta[k],theta[k+1]))[1].max()*1.1
+													self.signal_intensity(np.linspace(theta[k],theta[k+1]))[1].max()*1.1
 													for k in range(len(theta)-1)
 												]
 											  ), 
