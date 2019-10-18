@@ -3,7 +3,7 @@ import scipy.constants as const
 from .darmat_rand import sample_with_boxes
 
 def sinc(x):
-	return np.sin(x)/x
+	return np.sin(x)/x if x != 0 else 1
 
 def SPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, n_idler, alpha, amplitude=1):
 	return sinc(np.pi*l/lambda_pump*
@@ -115,3 +115,56 @@ class SPDC:
 	
 	def theta_idler(self, theta_signal):
 		return np.arcsin(self.alpha/(1-self.alpha)*self.n_signal/self.n_idler*np.sin(theta_signal))
+
+########################################################################
+
+def zeros_SPDC_dSPDC(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi):
+	a = alpha*n_signal/Xi
+	# First find an approximate range for the "q" values
+	theta_test = np.linspace(0, np.pi, 100)
+	if a < 1:
+		q_range = crystal_l/lambda_pump*(n_pump - alpha*n_signal*np.cos(theta_test) - (Xi**2 - alpha**2*n_signal**2*np.sin(theta_test)**2)**.5)
+	if a > 1:
+		q_range = crystal_l/lambda_pump*(n_pump - (alpha**2*n_signal**2 - Xi**2*np.sin(theta_test)**2)**.5 - Xi*np.cos(theta_test))
+	if a == 1:
+		raise ValueError('"a = 1" is not yet implemented')
+	theta_zeros = []
+	q_zeros = []
+	for q in range(int(min(q_range)), int(max(q_range))):
+		if q == 0:
+			continue
+		if a < 1:
+			cosenando = ((n_pump - lambda_pump/crystal_l*q)**2 - Xi**2 + n_signal**2*alpha**2)/2/n_signal/alpha/(n_pump - lambda_pump/crystal_l*q)
+		if a > 1:
+			cosenando = ((n_pump - lambda_pump/crystal_l*q)**2 + Xi**2 - n_signal**2*alpha**2)/2/n_signal/alpha/(n_pump - lambda_pump/crystal_l*q)
+		if cosenando < -1 or cosenando > 1:
+			continue
+		q_zeros.append(q)
+		theta_zeros.append(np.arccos(cosenando))
+	return q_zeros, theta_zeros, ('theta_s' if a < 1 else 'theta_i')
+
+class new_SPDC:
+	def __init__(self, lambda_pump, crystal_l, n_pump, n_signal, n_idler, alpha):
+		if n_pump < 0 or n_signal < 0 or n_idler < 0:
+			raise ValueError('Negative refractive index received! I do not support this...')
+		if alpha < 0 or alpha > 1:
+			raise ValueError('The value of "alpha" must be between 0 and 1 (by definition of alpha).')
+		if crystal_l < 0:
+			raise ValueError('The value of "crystal_l" must be positive.')
+		if lambda_pump < 0:
+			raise ValueError('The value of "lambda_pump" must be positive.')
+		
+		self.lambda_pump = lambda_pump # In meters.
+		self.crystal_l = crystal_l # Nonlinear medium length in meters.
+		self.n_pump = n_pump
+		self.n_signal = n_signal
+		self.n_idler = n_idler
+		self.alpha = alpha # Ratio of signal frequency to pump frequency, i.e. omega_signal/omega_pump.
+		
+		self.omega_pump = 2*np.pi*const.c/lambda_pump
+		
+		self.Xi = n_idler*(1-alpha)
+		self.a = alpha*n_signal/self.Xi
+		
+		self.independent_variable = 'theta_s' if self.a < 1 else 'theta_i'
+		self.q_zeros, self.theta_zeros, _ = zeros_SPDC_dSPDC(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi)
