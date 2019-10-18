@@ -224,6 +224,8 @@ def W_in_branch_as_function_of_dependent_theta(lambda_pump, crystal_l, n_pump, n
 	W = [w1+w2 for w1,w2 in zip(W_first_half,W_second_half)]
 	return W, theta_name(a).get('dependent')
 
+# Theta relating functions ↓ -------------------------------------------
+
 def dependent_theta_from_independent_theta_in_branch_1(a, independent_theta_vals):
 	# The parameter "a" is defined as "alpha*n_signal/Xi"
 	if a < 0:
@@ -232,6 +234,18 @@ def dependent_theta_from_independent_theta_in_branch_1(a, independent_theta_vals
 		dependent_theta_vals = np.arcsin(a*np.sin(independent_theta_vals))
 	if a > 1:
 		dependent_theta_vals = np.arcsin(a**-1*np.sin(independent_theta_vals))
+	if a == 1:
+		dependent_theta_vals = independent_theta_vals
+	return dependent_theta_vals, theta_name(a).get('dependent')
+
+def dependent_theta_from_independent_theta_in_branch_2(a, independent_theta_vals):
+	# The parameter "a" is defined as "alpha*n_signal/Xi"
+	if a < 0:
+		raise ValueError('Values of "a" less than 0 are not valid.')
+	if a < 1:
+		dependent_theta_vals = np.pi - np.arcsin(a*np.sin(independent_theta_vals))
+	if a > 1:
+		dependent_theta_vals = np.pi - np.arcsin(a**-1*np.sin(independent_theta_vals))
 	if a == 1:
 		dependent_theta_vals = independent_theta_vals
 	return dependent_theta_vals, theta_name(a).get('dependent')
@@ -250,6 +264,39 @@ def independent_theta_from_dependent_theta_in_branch_1(a, dependent_theta_vals):
 	if a == 1:
 		independent_theta_vals = [dependent_theta_vals, [float('nan')]*len(dependent_theta_vals)]
 	return independent_theta_vals, theta_name(a).get('independent')
+
+def independent_theta_from_dependent_theta_in_branch_2(a, dependent_theta_vals):
+	if a < 0:
+		raise ValueError('Values of "a" less than 0 are not valid.')
+	if a < 1:
+		cutoff_angle = np.pi - np.arcsin(a)
+		dependent_theta_vals[dependent_theta_vals < cutoff_angle] = float('nan')
+		independent_theta_vals = [np.arcsin(a**-1*np.sin(dependent_theta_vals)), np.pi - np.arcsin(a**-1*np.sin(dependent_theta_vals))]
+	if a > 1:
+		cutoff_angle = np.pi - np.arcsin(a**-1)
+		dependent_theta_vals[dependent_theta_vals < cutoff_angle] = float('nan')
+		independent_theta_vals = [np.arcsin(a*np.sin(dependent_theta_vals)), np.pi - np.arcsin(a*np.sin(dependent_theta_vals))]
+	if a == 1:
+		independent_theta_vals = [dependent_theta_vals, [float('nan')]*len(dependent_theta_vals)]
+	return independent_theta_vals, theta_name(a).get('independent')
+
+def independent_theta_from_dependent_theta(a, dependent_theta, branch):
+	if branch not in ['branch_1', 'branch_2']:
+		raise ValueError('"branch" must be one of ' + str(['branch_1', 'branch_2']))
+	if branch == 'branch_1':
+		return independent_theta_from_dependent_theta_in_branch_1(a, dependent_theta)
+	if branch == 'branch_2':
+		return independent_theta_from_dependent_theta_in_branch_2(a, dependent_theta)
+
+def dependent_theta_from_independent_theta(a, independent_theta, branch):
+	if branch not in ['branch_1', 'branch_2']:
+		raise ValueError('"branch" must be one of ' + str(['branch_1', 'branch_2']))
+	if branch == 'branch_1':
+		return dependent_theta_from_independent_theta_in_branch_1(a, independent_theta)
+	if branch == 'branch_2':
+		return dependent_theta_from_independent_theta_in_branch_2(a, independent_theta)
+
+# Theta relating functions ↑ -------------------------------------------
 
 class new_SPDC:
 	def __init__(self, lambda_pump, crystal_l, n_pump, n_signal, n_idler, alpha):
