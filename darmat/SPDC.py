@@ -159,12 +159,37 @@ def intensity_in_branch_1(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, i
 		independent_theta_name = 'theta_i'
 	return independent_theta_vals, W, independent_theta_name
 
-# ~ def dependent_variable_in_branch_1(a, independent_angle):
-	# ~ # The parameter "a" is defined as "alpha*n_signal/Xi"
-	# ~ if a < 0:
-		# ~ raise ValueError('Values of "a" less than 0 are not valid.')
-	# ~ if a < 1:
-		# ~ theta_dependent
+def dependent_theta_from_independent_theta_in_branch_1(a, independent_theta_vals):
+	# The parameter "a" is defined as "alpha*n_signal/Xi"
+	if a < 0:
+		raise ValueError('Values of "a" less than 0 are not valid.')
+	if a < 1:
+		dependent_theta_vals = np.arcsin(a*np.sin(independent_theta_vals))
+		dependent_theta_name = 'theta_i'
+	if a > 1:
+		dependent_theta_vals = np.arcsin(a**-1*np.sin(independent_theta_vals))
+		dependent_theta_name = 'theta_s'
+	if a == 1:
+		dependent_theta_vals = independent_theta_vals
+		dependent_theta_name = 'theta_i'
+	return dependent_theta_vals, dependent_theta_name
+
+def independent_theta_from_dependent_theta_in_branch_1(a, dependent_theta_vals):
+	if a < 0:
+		raise ValueError('Values of "a" less than 0 are not valid.')
+	if a < 1:
+		independent_theta_name = 'theta_s'
+		cutoff_angle = np.arcsin(a)
+		dependent_theta_vals[dependent_theta_vals > cutoff_angle] = float('nan')
+		independent_theta_vals = [np.arcsin(a**-1*np.sin(dependent_theta_vals)), np.pi - np.arcsin(a**-1*np.sin(dependent_theta_vals))]
+	if a > 1:
+		independent_theta_name = 'theta_i'
+		cutoff_angle = np.arcsin(a**-1)
+		dependent_theta_vals[dependent_theta_vals > cutoff_angle] = float('nan')
+		independent_theta_vals = [np.arcsin(a*np.sin(dependent_theta_vals)), np.pi - np.arcsin(a*np.sin(dependent_theta_vals))]
+	if a == 1:
+		raise ValueError('Not yet implemented.')
+	return independent_theta_vals, independent_theta_name
 
 class new_SPDC:
 	def __init__(self, lambda_pump, crystal_l, n_pump, n_signal, n_idler, alpha):
@@ -189,7 +214,7 @@ class new_SPDC:
 		self.Xi = n_idler*(1-alpha)
 		self.a = alpha*n_signal/self.Xi
 		
-		self.independent_theta_name = 'theta_s' if self.a < 1 else 'theta_i'
+		self.independent_theta_name = 'theta_s' if self.a <= 1 else 'theta_i'
 		self.q_zeros, self.independent_theta_zeros, _ = zeros_SPDC_dSPDC(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi)
 	
 	def intensity_in_branch_1(self, theta = None):
