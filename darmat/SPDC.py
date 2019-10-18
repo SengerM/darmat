@@ -188,7 +188,8 @@ def independent_theta_from_dependent_theta_in_branch_1(a, dependent_theta_vals):
 		dependent_theta_vals[dependent_theta_vals > cutoff_angle] = float('nan')
 		independent_theta_vals = [np.arcsin(a*np.sin(dependent_theta_vals)), np.pi - np.arcsin(a*np.sin(dependent_theta_vals))]
 	if a == 1:
-		raise ValueError('Not yet implemented.')
+		independent_theta_vals = [dependent_theta_vals, [float('nan')]*len(dependent_theta_vals)]
+		independent_theta_name = 'theta_s'
 	return independent_theta_vals, independent_theta_name
 
 class new_SPDC:
