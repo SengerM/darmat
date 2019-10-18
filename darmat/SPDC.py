@@ -143,12 +143,7 @@ def zeros_SPDC_dSPDC(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi):
 		independent_theta_zeros.append(np.arccos(cosenando))
 	return q_zeros, independent_theta_zeros, ('theta_s' if a < 1 else 'theta_i')
 
-def intensity_in_branch_1(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, independent_theta_vals = None):
-	if independent_theta_vals == None:
-		_, independent_theta_zeros, who_is_independent = zeros_SPDC_dSPDC(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi)
-		minimum_distance_between_zeros = min(np.diff(independent_theta_zeros))
-		theta_step = minimum_distance_between_zeros/20
-		independent_theta_vals = np.linspace(0, np.pi, int(np.pi/theta_step))
+def W_in_branch_1_as_function_of_independent_theta(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, independent_theta_vals):
 	independent_theta_vals = np.array(independent_theta_vals)
 	a = alpha*n_signal/Xi
 	if a < 1:
@@ -158,6 +153,22 @@ def intensity_in_branch_1(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, i
 		W =sinc(np.pi*crystal_l/lambda_pump*(n_pump - (alpha**2*n_signal**2 - Xi**2*np.sin(independent_theta_vals)**2)**.5 - Xi*np.cos(independent_theta_vals)))**2
 		independent_theta_name = 'theta_i'
 	return independent_theta_vals, W, independent_theta_name
+
+# ~ def W_in_branch_1_as_function_of_dependent_theta(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, dependent_theta_vals = None):
+	# ~ a = alpha*n_signal/Xi
+	# ~ if dependent_theta_vals == None:
+		# ~ _, independent_theta_zeros, independent_theta_name = zeros_SPDC_dSPDC(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi)
+		# ~ minimum_distance_between_zeros = min(np.diff(independent_theta_zeros))
+		# ~ theta_step = minimum_distance_between_zeros/20
+		# ~ independent_theta_vals = np.linspace(0, np.pi, int(np.pi/theta_step))
+		# ~ dependent_theta_vals, dependent_theta_name = dependent_theta_from_independent_theta_in_branch_1(a, independent_theta_vals)
+	# ~ else:
+		# ~ independent_theta_vals, dependent_theta_name = independent_theta_from_dependent_theta_in_branch_1(a, dependent_theta_vals)
+	# ~ dependent_theta_vals = np.array(dependent_theta_vals)
+	# ~ _, W_fist_half, _ = W_in_branch_1_as_function_of_dependent_theta(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, independent_theta_vals[0])
+	# ~ _, W_second_half, _ = W_in_branch_1_as_function_of_dependent_theta(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, independent_theta_vals[1])
+	# ~ W = [w1+w2 for w1,w2 in zip(W_first_half,W_second_half)]
+	# ~ return dependent_theta_vals, W, dependent_theta_name
 
 def dependent_theta_from_independent_theta_in_branch_1(a, independent_theta_vals):
 	# The parameter "a" is defined as "alpha*n_signal/Xi"
@@ -218,7 +229,11 @@ class new_SPDC:
 		self.independent_theta_name = 'theta_s' if self.a <= 1 else 'theta_i'
 		self.q_zeros, self.independent_theta_zeros, _ = zeros_SPDC_dSPDC(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi)
 	
-	def intensity_in_branch_1(self, theta = None):
-		theta, W, independent_theta_name = intensity_in_branch_1(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi, theta)
-		return theta, W, independent_theta_name
+	def W_in_branch_1_as_function_of_independent_theta(self, independent_theta_vals = None):
+		if independent_theta_vals == None:
+			minimum_distance_between_zeros = min(np.diff(self.independent_theta_zeros))
+			theta_step = minimum_distance_between_zeros/20
+			independent_theta_vals = np.linspace(0, np.pi, int(np.pi/theta_step))
+		independent_theta_vals, W, independent_theta_name = W_in_branch_1_as_function_of_independent_theta(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi, independent_theta_vals)
+		return independent_theta_vals, W
 		
