@@ -121,7 +121,7 @@ class SPDC:
 def zeros_SPDC_dSPDC(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi):
 	a = alpha*n_signal/Xi
 	# First find an approximate range for the "q" values
-	theta_test = np.linspace(0, np.pi, 100)
+	theta_test = np.linspace(0, np.pi, 999)
 	if a < 1:
 		q_range = crystal_l/lambda_pump*(n_pump - alpha*n_signal*np.cos(theta_test) - (Xi**2 - alpha**2*n_signal**2*np.sin(theta_test)**2)**.5)
 	if a > 1:
@@ -130,18 +130,34 @@ def zeros_SPDC_dSPDC(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi):
 		raise ValueError('"a = 1" is not yet implemented')
 	theta_zeros = []
 	q_zeros = []
-	for q in range(int(min(q_range)), int(max(q_range))):
+	for q in range(int(np.floor(min(q_range))), int(np.ceil(max(q_range)))):
 		if q == 0:
 			continue
 		if a < 1:
 			cosenando = ((n_pump - lambda_pump/crystal_l*q)**2 - Xi**2 + n_signal**2*alpha**2)/2/n_signal/alpha/(n_pump - lambda_pump/crystal_l*q)
 		if a > 1:
-			cosenando = ((n_pump - lambda_pump/crystal_l*q)**2 + Xi**2 - n_signal**2*alpha**2)/2/n_signal/alpha/(n_pump - lambda_pump/crystal_l*q)
+			cosenando = ((n_pump - lambda_pump/crystal_l*q)**2 + Xi**2 - n_signal**2*alpha**2)/2/Xi/(n_pump - lambda_pump/crystal_l*q)
 		if cosenando < -1 or cosenando > 1:
 			continue
 		q_zeros.append(q)
 		theta_zeros.append(np.arccos(cosenando))
 	return q_zeros, theta_zeros, ('theta_s' if a < 1 else 'theta_i')
+
+def intensity_in_branch_1(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, theta = None):
+	if theta == None:
+		_, theta_zeros, who_is_independent = zeros_SPDC_dSPDC(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi)
+		minimum_distance_between_zeros = min(np.diff(theta_zeros))
+		theta_step = minimum_distance_between_zeros/20
+		theta = np.linspace(0, np.pi, int(np.pi/theta_step))
+	
+	a = alpha*n_signal/Xi
+	if a < 1:
+		W = sinc(np.pi*crystal_l/lambda_pump*(n_pump - alpha*n_signal*np.cos(theta) - (Xi**2 - alpha**2*n_signal**2*np.sin(theta)**2)**.5))**2
+		independent_variable = 'theta_s'
+	if a > 1:
+		W =sinc(np.pi*crystal_l/lambda_pump*(n_pump - (alpha**2*n_signal**2 - Xi**2*np.sin(theta)**2)**.5 - Xi*np.cos(theta)))**2
+		independent_variable = 'theta_i'
+	return theta, W, independent_variable
 
 class new_SPDC:
 	def __init__(self, lambda_pump, crystal_l, n_pump, n_signal, n_idler, alpha):
@@ -168,3 +184,6 @@ class new_SPDC:
 		
 		self.independent_variable = 'theta_s' if self.a < 1 else 'theta_i'
 		self.q_zeros, self.theta_zeros, _ = zeros_SPDC_dSPDC(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi)
+	
+	def intensity_in_branch_1(self, theta = None):
+		return intensity_in_branch_1(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi, theta)
