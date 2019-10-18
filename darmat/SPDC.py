@@ -2,8 +2,11 @@ import numpy as np
 import scipy.constants as const
 from .darmat_rand import sample_with_boxes
 
+def sinc(x):
+	return np.sin(x)/x
+
 def SPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, n_idler, alpha, amplitude=1):
-	return np.sinc(np.pi*l/lambda_pump*
+	return sinc(np.pi*l/lambda_pump*
 					(
 					n_pump - alpha*n_signal*np.cos(theta) 
 					- n_idler*(
@@ -26,7 +29,7 @@ def SPDC_zeros(lambda_pump, l, n_pump, n_signal, n_idler, alpha, q_try = range(-
 	for q in q_try:
 		if q == 0:
 			continue
-		radicando = 1 - ((lambda_pump/l*q/np.pi - n_pump)**2 + n_signal**2*alpha**2 - n_idler**2*(1-alpha)**2)**2/(4*n_signal**2*alpha**2*(lambda_pump/l*q/np.pi - n_pump)**2)
+		radicando = 1 - ((lambda_pump/l*q - n_pump)**2 + n_signal**2*alpha**2 - n_idler**2*(1-alpha)**2)**2/(4*n_signal**2*alpha**2*(lambda_pump/l*q - n_pump)**2)
 		if radicando < 0:
 			continue
 		xq = np.sqrt(radicando)

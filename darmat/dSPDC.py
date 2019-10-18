@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.constants as const
 from .darmat_rand import sample_with_boxes
+from .SPDC import sinc
 
 def theta_phasematch_dSPDC(lambda_pump, n_pump, n_signal, alpha, m):
 	omega_pump = 2*np.pi*const.c/lambda_pump
@@ -14,7 +15,7 @@ def theta_cutoff_dSPDC(lambda_pump, l, n_pump, n_signal, alpha, m):
 
 def dSPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, alpha, m):
 	omega_pump = 2*np.pi*const.c/lambda_pump
-	return np.sinc(np.pi*l/lambda_pump*(n_pump - alpha*n_signal*np.cos(theta)
+	return sinc(np.pi*l/lambda_pump*(n_pump - alpha*n_signal*np.cos(theta)
 				   - ((1-alpha)**2 - m**2*const.c**4/const.hbar**2/omega_pump**2
 				   - alpha**2*n_signal**2*np.sin(theta)**2)**.5))**2
 
@@ -26,9 +27,9 @@ def dSPDC_zeros(lambda_pump, l, n_pump, n_signal, alpha, m, q_try = range(-300,3
 		if q == 0:
 			continue
 		xq = np.sqrt(
-			   1 - ((lambda_pump/l*q/np.pi - n_pump)**2 + n_signal**2*alpha**2 - 
+			   1 - ((lambda_pump/l*q - n_pump)**2 + n_signal**2*alpha**2 - 
 			   (1-alpha)**2 + m**2*const.c**4/omega_pump**2/const.hbar**2)**2 /
-			   (4*n_signal**2*alpha**2*(lambda_pump/l*q/np.pi - n_pump)**2)
+			   (4*n_signal**2*alpha**2*(lambda_pump/l*q - n_pump)**2)
 			  )
 		if xq < -1 or xq > 1 or np.isnan(xq):
 			continue
