@@ -326,7 +326,7 @@ class new_SPDC:
 		self.q_zeros, self.independent_theta_zeros, _ = zeros_of_W_in_branch_1(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi)
 	
 	def W_as_function_of_independent_theta(self, independent_theta_vals = None, branch = 'branch_1'):
-		if independent_theta_vals == None:
+		if independent_theta_vals is None:
 			minimum_distance_between_zeros = min(np.diff(self.independent_theta_zeros))
 			theta_step = minimum_distance_between_zeros/20
 			independent_theta_vals = np.linspace(0, np.pi, int(np.pi/theta_step))
@@ -342,11 +342,11 @@ class new_SPDC:
 		return independent_theta_vals, W
 	
 	def W_as_function_of_dependent_theta(self, dependent_theta_vals = None, branch = 'branch_1'):
-		if dependent_theta_vals == None:
+		if dependent_theta_vals is None:
 			minimum_distance_between_zeros = min(np.diff(self.independent_theta_zeros))
 			theta_step = minimum_distance_between_zeros/20
 			independent_theta_vals = np.linspace(0, np.pi, int(np.pi/theta_step))
-			dependent_theta_vals, dependent_theta_name = dependent_theta_from_independent_theta_in_branch_1(self.a, independent_theta_vals)
+			dependent_theta_vals, dependent_theta_name = dependent_theta_from_independent_theta(self.a, independent_theta_vals, branch)
 		W, dependent_theta_name = W_in_branch_as_function_of_dependent_theta(
 											self.lambda_pump, 
 											self.crystal_l, 
