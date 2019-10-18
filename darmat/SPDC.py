@@ -3,7 +3,7 @@ import scipy.constants as const
 from .darmat_rand import sample_with_boxes
 
 def sinc(x):
-	return np.sin(x)/x if x != 0 else 1
+	return np.sinc(x/np.pi)
 
 def SPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, n_idler, alpha, amplitude=1):
 	return sinc(np.pi*l/lambda_pump*
