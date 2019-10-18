@@ -121,27 +121,29 @@ class SPDC:
 def theta_name(a):
 	if a < 0:
 		raise ValueError('The value of "a" cannot be less than 0.')
-	if a <= 1:
+	if a < 1:
 		return {'independent': 'theta_s', 'dependent': 'theta_i'}
 	if a > 1:
 		return {'independent': 'theta_i', 'dependent': 'theta_s'}
+	if a == 1:
+		raise ValueError('"a = 1" not implemented yet.')
 
-def zeros_SPDC_dSPDC(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi):
+def zeros_of_W_in_branch_1(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi):
 	a = alpha*n_signal/Xi
 	# First find an approximate range for the "q" values
 	theta_test = np.linspace(0, np.pi, 999)
-	if a < 1:
+	if a <= 1:
 		q_range = crystal_l/lambda_pump*(n_pump - alpha*n_signal*np.cos(theta_test) - (Xi**2 - alpha**2*n_signal**2*np.sin(theta_test)**2)**.5)
 	if a > 1:
 		q_range = crystal_l/lambda_pump*(n_pump - (alpha**2*n_signal**2 - Xi**2*np.sin(theta_test)**2)**.5 - Xi*np.cos(theta_test))
 	if a == 1:
-		raise ValueError('"a = 1" is not yet implemented')
+		raise ValueError('"a = 1" is not implemented')
 	independent_theta_zeros = []
 	q_zeros = []
 	for q in range(int(np.floor(min(q_range))), int(np.ceil(max(q_range)))):
 		if q == 0:
 			continue
-		if a < 1:
+		if a <= 1:
 			cosenando = ((n_pump - lambda_pump/crystal_l*q)**2 - Xi**2 + n_signal**2*alpha**2)/2/n_signal/alpha/(n_pump - lambda_pump/crystal_l*q)
 		if a > 1:
 			cosenando = ((n_pump - lambda_pump/crystal_l*q)**2 + Xi**2 - n_signal**2*alpha**2)/2/Xi/(n_pump - lambda_pump/crystal_l*q)
@@ -151,21 +153,47 @@ def zeros_SPDC_dSPDC(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi):
 		independent_theta_zeros.append(np.arccos(cosenando))
 	return q_zeros, independent_theta_zeros, theta_name(a).get('independent')
 
-def W_in_branch_1_as_function_of_independent_theta(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, independent_theta_vals):
-	independent_theta_vals = np.array(independent_theta_vals)
-	a = alpha*n_signal/Xi
-	independent_theta_name = theta_name(a).get('independent')
-	if a < 1:
-		W = sinc(np.pi*crystal_l/lambda_pump*(n_pump - alpha*n_signal*np.cos(independent_theta_vals) - (Xi**2 - alpha**2*n_signal**2*np.sin(independent_theta_vals)**2)**.5))**2
+# W functions ↓ --------------------------------------------------------
+
+def W_branch_1_a_less_than_one(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, theta_s):
+	a = n_signal*alpha/Xi
 	if a > 1:
-		W =sinc(np.pi*crystal_l/lambda_pump*(n_pump - (alpha**2*n_signal**2 - Xi**2*np.sin(independent_theta_vals)**2)**.5 - Xi*np.cos(independent_theta_vals)))**2
-	return independent_theta_vals, W, independent_theta_name
+		raise ValueError('"a = n_signal*alpha/Xi" is greater than 1.')
+	return sinc(np.pi*crystal_l/lambda_pump*(n_pump - Xi*(a*np.cos(theta_s) + (1-a**2*np.sin(theta_s)**2)**.5)))**2
+
+def W_branch_2_a_less_than_one(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, theta_s):
+	a = n_signal*alpha/Xi
+	if a > 1:
+		raise ValueError('"a = n_signal*alpha/Xi" is greater than 1.')
+	return sinc(np.pi*crystal_l/lambda_pump*(n_pump - Xi*(a*np.cos(theta_s) - (1-a**2*np.sin(theta_s)**2)**.5)))**2
+
+def W_branch_1_a_greater_than_one(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, theta_i):
+	a = n_signal*alpha/Xi
+	if a < 1:
+		raise ValueError('"a = n_signal*alpha/Xi" is less than 1.')
+	return sinc(np.pi*crystal_l/lambda_pump*(n_pump - Xi*(np.cos(theta_i) + (a**2 - np.sin(theta_i)**2)**.5)))**2
+
+def W_branch_2_a_greater_than_one(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, theta_i):
+	a = n_signal*alpha/Xi
+	if a < 1:
+		raise ValueError('"a = n_signal*alpha/Xi" is less than 1.')
+	return sinc(np.pi*crystal_l/lambda_pump*(n_pump - Xi*(np.cos(theta_i) - (a**2 - np.sin(theta_i)**2)**.5)))**2
+
+# W functions ↑ --------------------------------------------------------
+
+def W_in_branch_1_as_function_of_independent_theta(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, independent_theta_vals):
+	a = alpha*n_signal/Xi
+	if a < 1:
+		W = W_branch_1_a_less_than_one(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, theta_s=independent_theta_vals)
+	if a > 1:
+		W = W_branch_1_a_greater_than_one(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, theta_i=independent_theta_vals)
+	return W, theta_name(a).get('independent')
 
 def W_in_branch_1_as_function_of_dependent_theta(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, dependent_theta_vals = None):
 	a = alpha*n_signal/Xi
 	dependent_theta_vals = np.array(dependent_theta_vals)
 	independent_theta_vals, independent_theta_name = independent_theta_from_dependent_theta_in_branch_1(a, dependent_theta_vals)
-	_, W_first_half, _ = W_in_branch_1_as_function_of_independent_theta(
+	W_first_half, _ = W_in_branch_1_as_function_of_independent_theta(
 								lambda_pump, 
 								crystal_l, 
 								n_pump, 
@@ -173,7 +201,7 @@ def W_in_branch_1_as_function_of_dependent_theta(lambda_pump, crystal_l, n_pump,
 								alpha, 
 								Xi, 
 								independent_theta_vals[0])
-	_, W_second_half, _ = W_in_branch_1_as_function_of_independent_theta(
+	W_second_half, _ = W_in_branch_1_as_function_of_independent_theta(
 								lambda_pump, 
 								crystal_l, 
 								n_pump, 
@@ -236,14 +264,14 @@ class new_SPDC:
 		
 		self.independent_theta_name = theta_name(self.a).get('independent')
 		self.dependent_theta_name = theta_name(self.a).get('dependent')
-		self.q_zeros, self.independent_theta_zeros, _ = zeros_SPDC_dSPDC(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi)
+		self.q_zeros, self.independent_theta_zeros, _ = zeros_of_W_in_branch_1(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi)
 	
 	def W_in_branch_1_as_function_of_independent_theta(self, independent_theta_vals = None):
 		if independent_theta_vals == None:
 			minimum_distance_between_zeros = min(np.diff(self.independent_theta_zeros))
 			theta_step = minimum_distance_between_zeros/20
 			independent_theta_vals = np.linspace(0, np.pi, int(np.pi/theta_step))
-		independent_theta_vals, W, independent_theta_name = W_in_branch_1_as_function_of_independent_theta(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi, independent_theta_vals)
+		W, independent_theta_name = W_in_branch_1_as_function_of_independent_theta(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi, independent_theta_vals)
 		return independent_theta_vals, W
 	
 	def W_in_branch_1_as_function_of_dependent_theta(self, dependent_theta_vals = None):
@@ -254,3 +282,4 @@ class new_SPDC:
 			dependent_theta_vals, dependent_theta_name = dependent_theta_from_independent_theta_in_branch_1(self.a, independent_theta_vals)
 		dependent_theta_vals, W, dependent_theta_name = W_in_branch_1_as_function_of_dependent_theta(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi, dependent_theta_vals)
 		return dependent_theta_vals, W
+	
