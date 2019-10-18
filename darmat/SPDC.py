@@ -222,7 +222,7 @@ def W_in_branch_as_function_of_dependent_theta(lambda_pump, crystal_l, n_pump, n
 								independent_theta_vals[1],
 								branch)
 	W = [w1+w2 for w1,w2 in zip(W_first_half,W_second_half)]
-	return dependent_theta_vals, W, theta_name(a).get('dependent')
+	return W, theta_name(a).get('dependent')
 
 def dependent_theta_from_independent_theta_in_branch_1(a, independent_theta_vals):
 	# The parameter "a" is defined as "alpha*n_signal/Xi"
@@ -300,7 +300,7 @@ class new_SPDC:
 			theta_step = minimum_distance_between_zeros/20
 			independent_theta_vals = np.linspace(0, np.pi, int(np.pi/theta_step))
 			dependent_theta_vals, dependent_theta_name = dependent_theta_from_independent_theta_in_branch_1(self.a, independent_theta_vals)
-		dependent_theta_vals, W, dependent_theta_name = W_in_branch_as_function_of_dependent_theta(
+		W, dependent_theta_name = W_in_branch_as_function_of_dependent_theta(
 											self.lambda_pump, 
 											self.crystal_l, 
 											self.n_pump, 
