@@ -394,6 +394,9 @@ class new_SPDC:
 																	a = self.a, 
 																	independent_theta = np.linspace(0,np.pi), 
 																	branch = branch)
-			ax.plot(np.linspace(0,np.pi)*180/np.pi, dependent_theta_vals*180/np.pi, color = (0,0,0), linestyle = '--')
+			if dependent_theta_name == 'theta_i':
+				ax.plot(np.linspace(0,np.pi)*180/np.pi, dependent_theta_vals*180/np.pi, color = (0,0,0), linestyle = '--')
+			if dependent_theta_name == 'theta_s':
+				ax.plot(dependent_theta_vals*180/np.pi, np.linspace(0,np.pi)*180/np.pi, color = (0,0,0), linestyle = '--')
 			
 		return fig
