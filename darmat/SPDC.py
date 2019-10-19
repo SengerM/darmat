@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import scipy.constants as const
 from .darmat_rand import sample_with_boxes
 
@@ -181,8 +182,6 @@ def W_branch_2_a_greater_than_one(lambda_pump, crystal_l, n_pump, n_signal, alph
 		raise ValueError('"a = n_signal*alpha/Xi" is less than 1.')
 	return sinc(np.pi*crystal_l/lambda_pump*(n_pump - Xi*(np.cos(theta_i) - (a**2 - np.sin(theta_i)**2)**.5)))**2
 
-# W functions ↑ --------------------------------------------------------
-
 def W_in_branch_as_function_of_independent_theta(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, independent_theta_vals, branch='branch_1'):
 	a = alpha*n_signal/Xi
 	if branch not in ['branch_1', 'branch_2']:
@@ -223,6 +222,11 @@ def W_in_branch_as_function_of_dependent_theta(lambda_pump, crystal_l, n_pump, n
 								branch)
 	W = [w1+w2 for w1,w2 in zip(W_first_half,W_second_half)]
 	return W, theta_name(a).get('dependent')
+
+def W_in_thetas_space(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, theta_s, theta_i):
+	return sinc(np.pi*crystal_l/lambda_pump*(n_pump - alpha*n_signal*np.cos(theta_s) - Xi*np.cos(theta_i)))**2
+
+# W functions ↑ --------------------------------------------------------
 
 # Theta relating functions ↓ -------------------------------------------
 
@@ -358,3 +362,38 @@ class new_SPDC:
 											branch)
 		return dependent_theta_vals, W
 	
+	def plot_W_in_thetas_space(self, theta_s=None, theta_i=None):
+		if theta_s is None:
+			theta_s = np.linspace(0,180/180*np.pi,999)
+		if theta_i is None:
+			theta_i = np.linspace(0,180/180*np.pi,999)
+		ts, ti = np.meshgrid(theta_s, theta_i)
+		fig, ax = plt.subplots()
+		ax.set_xlabel(r'$\theta _s$ (deg)')
+		ax.set_ylabel(r'$\theta _i$ (deg)')
+		cs = ax.pcolormesh(
+				   ts*180/np.pi,
+				   ti*180/np.pi,
+				   W_in_thetas_space(
+									  lambda_pump = self.lambda_pump, 
+									  crystal_l = self.crystal_l, 
+									  n_pump = self.n_pump, 
+									  n_signal = self.n_signal, 
+									  alpha = self.alpha, 
+									  Xi = self.Xi, 
+									  theta_s = ts, 
+									  theta_i = ti
+									), 
+				   cmap = 'coolwarm',
+				   vmin = 0,
+				   vmax = 1
+				 )
+		cbar = fig.colorbar(cs)
+		for branch in ['branch_1', 'branch_2']:
+			dependent_theta_vals, dependent_theta_name = dependent_theta_from_independent_theta(
+																	a = self.a, 
+																	independent_theta = np.linspace(0,np.pi), 
+																	branch = branch)
+			ax.plot(np.linspace(0,np.pi)*180/np.pi, dependent_theta_vals*180/np.pi, color = (0,0,0), linestyle = '--')
+			
+		return fig
