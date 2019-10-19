@@ -201,7 +201,12 @@ def W_in_branch_as_function_of_independent_theta(lambda_pump, crystal_l, n_pump,
 def W_in_branch_as_function_of_dependent_theta(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, dependent_theta_vals = None, branch = 'branch_1'):
 	a = alpha*n_signal/Xi
 	dependent_theta_vals = np.array(dependent_theta_vals)
-	independent_theta_vals, independent_theta_name = independent_theta_from_dependent_theta_in_branch_1(a, dependent_theta_vals)
+	if branch not in ['branch_1', 'branch_2']:
+		raise ValueError('"branch" must be one of ' + str(['branch_1', 'branch_2']))
+	if branch == 'branch_1':
+		independent_theta_vals, independent_theta_name = independent_theta_from_dependent_theta_in_branch_1(a, dependent_theta_vals)
+	if branch == 'branch_2':
+		independent_theta_vals, independent_theta_name = independent_theta_from_dependent_theta_in_branch_2(a, dependent_theta_vals)
 	W_first_half, _ = W_in_branch_as_function_of_independent_theta(
 								lambda_pump, 
 								crystal_l, 
@@ -360,7 +365,18 @@ class new_SPDC:
 											self.Xi, 
 											dependent_theta_vals, 
 											branch)
+		W = np.array(W)
+		W[np.isnan(W)] = 0
 		return dependent_theta_vals, W
+	
+	def observed_W(self, theta = None):
+		# The parameter "theta" is the detector angle.
+		theta, W1_indep = self.W_as_function_of_independent_theta(independent_theta_vals = theta, branch = 'branch_1')
+		theta, W2_indep = self.W_as_function_of_independent_theta(independent_theta_vals = theta, branch = 'branch_2')
+		theta, W1_dep = self.W_as_function_of_dependent_theta(dependent_theta_vals = theta, branch = 'branch_1')
+		theta, W2_dep = self.W_as_function_of_dependent_theta(dependent_theta_vals = theta, branch = 'branch_2')
+		total_W = W1_indep + W2_indep + W1_dep + W2_dep
+		return theta, total_W, W1_indep, W2_indep, W1_dep, W2_dep
 	
 	def plot_W_in_thetas_space(self, theta_s=None, theta_i=None):
 		if theta_s is None:
@@ -398,5 +414,4 @@ class new_SPDC:
 				ax.plot(np.linspace(0,np.pi)*180/np.pi, dependent_theta_vals*180/np.pi, color = (0,0,0), linestyle = '--')
 			if dependent_theta_name == 'theta_s':
 				ax.plot(dependent_theta_vals*180/np.pi, np.linspace(0,np.pi)*180/np.pi, color = (0,0,0), linestyle = '--')
-			
 		return fig
