@@ -231,6 +231,40 @@ def W_in_branch_as_function_of_dependent_theta(lambda_pump, crystal_l, n_pump, n
 def W_in_thetas_space(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, theta_s, theta_i):
 	return sinc(np.pi*crystal_l/lambda_pump*(n_pump - alpha*n_signal*np.cos(theta_s) - Xi*np.cos(theta_i)))**2
 
+def plot_W_in_thetas_space(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, theta_s, theta_i):
+	ts, ti = np.meshgrid(theta_s, theta_i)
+	fig, ax = plt.subplots()
+	ax.set_xlabel(r'$\theta _s$ (deg)')
+	ax.set_ylabel(r'$\theta _i$ (deg)')
+	cs = ax.pcolormesh(
+			   ts*180/np.pi,
+			   ti*180/np.pi,
+			   W_in_thetas_space(
+								  lambda_pump = lambda_pump, 
+								  crystal_l = crystal_l, 
+								  n_pump = n_pump, 
+								  n_signal = n_signal, 
+								  alpha = alpha, 
+								  Xi = Xi, 
+								  theta_s = ts, 
+								  theta_i = ti
+								), 
+			   cmap = 'coolwarm',
+			   vmin = 0,
+			   vmax = 1
+			 )
+	cbar = fig.colorbar(cs)
+	for branch in ['branch_1', 'branch_2']:
+		dependent_theta_vals, dependent_theta_name = dependent_theta_from_independent_theta(
+																a = n_signal*alpha/Xi, 
+																independent_theta = np.linspace(0,np.pi), 
+																branch = branch)
+		if dependent_theta_name == 'theta_i':
+			ax.plot(np.linspace(0,np.pi)*180/np.pi, dependent_theta_vals*180/np.pi, color = (0,0,0), linestyle = '--')
+		if dependent_theta_name == 'theta_s':
+			ax.plot(dependent_theta_vals*180/np.pi, np.linspace(0,np.pi)*180/np.pi, color = (0,0,0), linestyle = '--')
+	return fig
+
 # W functions ↑ --------------------------------------------------------
 
 # Theta relating functions ↓ -------------------------------------------
@@ -382,35 +416,4 @@ class new_SPDC:
 			theta_s = np.linspace(0,180/180*np.pi,999)
 		if theta_i is None:
 			theta_i = np.linspace(0,180/180*np.pi,999)
-		ts, ti = np.meshgrid(theta_s, theta_i)
-		fig, ax = plt.subplots()
-		ax.set_xlabel(r'$\theta _s$ (deg)')
-		ax.set_ylabel(r'$\theta _i$ (deg)')
-		cs = ax.pcolormesh(
-				   ts*180/np.pi,
-				   ti*180/np.pi,
-				   W_in_thetas_space(
-									  lambda_pump = self.lambda_pump, 
-									  crystal_l = self.crystal_l, 
-									  n_pump = self.n_pump, 
-									  n_signal = self.n_signal, 
-									  alpha = self.alpha, 
-									  Xi = self.Xi, 
-									  theta_s = ts, 
-									  theta_i = ti
-									), 
-				   cmap = 'coolwarm',
-				   vmin = 0,
-				   vmax = 1
-				 )
-		cbar = fig.colorbar(cs)
-		for branch in ['branch_1', 'branch_2']:
-			dependent_theta_vals, dependent_theta_name = dependent_theta_from_independent_theta(
-																	a = self.a, 
-																	independent_theta = np.linspace(0,np.pi), 
-																	branch = branch)
-			if dependent_theta_name == 'theta_i':
-				ax.plot(np.linspace(0,np.pi)*180/np.pi, dependent_theta_vals*180/np.pi, color = (0,0,0), linestyle = '--')
-			if dependent_theta_name == 'theta_s':
-				ax.plot(dependent_theta_vals*180/np.pi, np.linspace(0,np.pi)*180/np.pi, color = (0,0,0), linestyle = '--')
-		return fig
+		return plot_W_in_thetas_space(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi, theta_s, theta_i)
