@@ -354,8 +354,7 @@ class new_SPDC:
 		if dependent_theta_vals is None:
 			minimum_distance_between_zeros = min(np.diff(self.independent_theta_zeros))
 			theta_step = minimum_distance_between_zeros/20
-			independent_theta_vals = np.linspace(0, np.pi, int(np.pi/theta_step))
-			dependent_theta_vals, dependent_theta_name = dependent_theta_from_independent_theta(self.a, independent_theta_vals, branch)
+			dependent_theta_vals = np.linspace(0, np.pi, int(np.pi/theta_step))
 		W, dependent_theta_name = W_in_branch_as_function_of_dependent_theta(
 											self.lambda_pump, 
 											self.crystal_l, 
