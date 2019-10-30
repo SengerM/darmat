@@ -251,7 +251,8 @@ def plot_W_in_thetas_space(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, 
 								), 
 			   cmap = 'coolwarm',
 			   vmin = 0,
-			   vmax = 1
+			   vmax = 1,
+			   rasterized = True
 			 )
 	cbar = fig.colorbar(cs)
 	for branch in ['branch_1', 'branch_2']:
