@@ -1,111 +1,89 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import scipy.constants as const
-from .darmat_rand import sample_with_boxes
-from .SPDC import sinc
-
-def theta_phasematch_dSPDC(lambda_pump, n_pump, n_signal, alpha, m):
-	omega_pump = 2*np.pi*const.c/lambda_pump
-	costheta = (n_pump**2 + alpha**2*n_signal**2 - (1-alpha)**2 + m**2*const.c**4/omega_pump**2/const.hbar**2)/2/alpha/n_pump/n_signal
-	return np.arccos(costheta) if costheta >= -1 and costheta <= 1 else float('nan')
-
-def theta_cutoff_dSPDC(lambda_pump, l, n_pump, n_signal, alpha, m):
-	omega_pump = 2*np.pi*const.c/lambda_pump
-	arg = ((1-alpha)**2 - m**2*const.c**4/omega_pump**2/const.hbar**2)**.5/alpha/n_signal
-	return np.arcsin(arg) if arg <= 1 else float('nan')
-
-def dSPDC_intensity_profile(theta, lambda_pump, l, n_pump, n_signal, alpha, m):
-	omega_pump = 2*np.pi*const.c/lambda_pump
-	return sinc(np.pi*l/lambda_pump*(n_pump - alpha*n_signal*np.cos(theta)
-				   - ((1-alpha)**2 - m**2*const.c**4/const.hbar**2/omega_pump**2
-				   - alpha**2*n_signal**2*np.sin(theta)**2)**.5))**2
-
-def dSPDC_zeros(lambda_pump, l, n_pump, n_signal, alpha, m, q_try = range(-300,300)):
-	omega_pump = 2*np.pi*const.c/lambda_pump
-	theta_zeros = []
-	q_zeros = []
-	for q in q_try:
-		if q == 0:
-			continue
-		xq = np.sqrt(
-			   1 - ((lambda_pump/l*q - n_pump)**2 + n_signal**2*alpha**2 - 
-			   (1-alpha)**2 + m**2*const.c**4/omega_pump**2/const.hbar**2)**2 /
-			   (4*n_signal**2*alpha**2*(lambda_pump/l*q - n_pump)**2)
-			  )
-		if xq < -1 or xq > 1 or np.isnan(xq):
-			continue
-		theta_zeros.append(np.arcsin(xq))
-		q_zeros.append(q)
-		if len(theta_zeros) == 1:
-			continue
-		if theta_zeros[-1] < theta_zeros[-2]: # This means that we are no longer finding zeros
-			theta_zeros = theta_zeros[:-2]
-			q_zeros = q_zeros[:-2]
-			break
-	return q_zeros, theta_zeros
+from .common_functions import *
 
 class dSPDC:
-	def __init__(self, lambda_pump, crystal_l, n_pump, n_signal, alpha, dark_photon_mass):
+	def __init__(self, lambda_pump, crystal_l, n_pump, n_signal, m_dark_photon, alpha):
 		if n_pump < 0 or n_signal < 0:
 			raise ValueError('Negative refractive index received! I do not support this...')
+		if alpha < 0 or alpha > 1:
+			raise ValueError('The value of "alpha" must be between 0 and 1 (by definition of alpha).')
 		if crystal_l < 0:
 			raise ValueError('The value of "crystal_l" must be positive.')
 		if lambda_pump < 0:
 			raise ValueError('The value of "lambda_pump" must be positive.')
-		if dark_photon_mass < 0:
-			raise ValueError('The mass of the dark photon must be possitive!')
-		if alpha < 0 or alpha > 1 - const.c**2*dark_photon_mass/const.hbar/(2*np.pi*const.c/lambda_pump):
-			raise ValueError('The value of "alpha" must be between 0 and "1 - c**2*m/hbar/omega_pump" (by definition of alpha).')
+		if m_dark_photon < 0:
+			raise ValueError('The mass of the dark photon must be >= 0.')
 		
-		self.lambda_pump = lambda_pump
-		self.crystal_l = crystal_l # Nonlinear medium length.
+		self.lambda_pump = lambda_pump # In meters.
+		self.crystal_l = crystal_l # Nonlinear medium length in meters.
 		self.n_pump = n_pump
 		self.n_signal = n_signal
+		self.m_dark_photon = m_dark_photon
 		self.alpha = alpha # Ratio of signal frequency to pump frequency, i.e. omega_signal/omega_pump.
-		self.dark_photon_mass = dark_photon_mass
 		
-		self.theta_signal_phasematch = theta_phasematch_dSPDC(self.lambda_pump, self.n_pump, self.n_signal, self.alpha, self.dark_photon_mass)
-		self.theta_signal_cutoff = theta_cutoff_dSPDC(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.dark_photon_mass)
+		self.omega_pump = 2*np.pi*const.c/lambda_pump
 		
-		self._theta_signal_zeros = []
-		self._q_signal_zeros = []
+		radicando = (1-alpha)**2 - m_dark_photon**2*const.c**4/self.omega_pump**2*const.hbar**2
+		self.Xi = ((1-alpha)**2 - m_dark_photon**2*const.c**4/self.omega_pump**2*const.hbar**2)**.5 if radicando >= 0 else float('nan')
+		self.a = alpha*n_signal/self.Xi
+		
+		self.independent_theta_name = theta_name(self.a).get('independent')
+		self.dependent_theta_name = theta_name(self.a).get('dependent')
+		self.q_zeros, self.independent_theta_zeros, _ = zeros_of_W_in_branch_1(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi)
 	
-	def theta_signal_zeros(self, q_try = range(-300,300)):
-		if self._theta_signal_zeros == [] or self._q_signal_zeros == []:
-			q, theta = dSPDC_zeros(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.dark_photon_mass, q_try)
-			self._theta_signal_zeros = theta
-			self._q_signal_zeros = q
-		return self._q_signal_zeros, self._theta_signal_zeros
+	def W_as_function_of_independent_theta(self, independent_theta_vals = None, branch = 'branch_1'):
+		if independent_theta_vals is None:
+			minimum_distance_between_zeros = min(np.diff(self.independent_theta_zeros))
+			theta_step = minimum_distance_between_zeros/20
+			independent_theta_vals = np.linspace(0, np.pi, int(np.pi/theta_step))
+		W, independent_theta_name = W_in_branch_as_function_of_independent_theta(
+											self.lambda_pump, 
+											self.crystal_l, 
+											self.n_pump, 
+											self.n_signal, 
+											self.alpha, 
+											self.Xi, 
+											independent_theta_vals, 
+											branch)
+		return independent_theta_vals, W
 	
-	def signal_intensity(self, theta_signal = None, amplitude=1):
-		if theta_signal is None:
-			max_theta = self.theta_signal_cutoff if not np.isnan(self.theta_signal_cutoff) else np.pi/2
-			q, theta_q = self.theta_signal_zeros()
-			if len(theta_q) >= 2:
-				step_theta = (np.diff(np.array(theta_q))).min()/20
-			else:
-				step_theta = max_theta/100
-			theta_signal = np.linspace(0,max_theta,int(max_theta/step_theta))
-		return theta_signal, dSPDC_intensity_profile(theta_signal, self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.dark_photon_mass)
+	def W_as_function_of_dependent_theta(self, dependent_theta_vals = None, branch = 'branch_1'):
+		if dependent_theta_vals is None:
+			minimum_distance_between_zeros = min(np.diff(self.independent_theta_zeros))
+			theta_step = minimum_distance_between_zeros/20
+			dependent_theta_vals = np.linspace(0, np.pi, int(np.pi/theta_step))
+		W, dependent_theta_name = W_in_branch_as_function_of_dependent_theta(
+											self.lambda_pump, 
+											self.crystal_l, 
+											self.n_pump, 
+											self.n_signal, 
+											self.alpha, 
+											self.Xi, 
+											dependent_theta_vals, 
+											branch)
+		W = np.array(W)
+		W[np.isnan(W)] = 0
+		return dependent_theta_vals, W
 	
-	def signal_samples(self, n_samples=1):
-		_, theta_zeros = self.theta_signal_zeros()
-		theta_signal_samples = sample_with_boxes(
-								  f = lambda x: self.signal_intensity(x)[1],
-								  xi = np.array([0] + [theta_zeros[k] for k in range(len(theta_zeros)-1)]), 
-								  xf = np.array([theta_zeros[k] for k in range(len(theta_zeros))]), 
-								  y = np.array(
-												[self.signal_intensity(np.linspace(0,theta_zeros[0]))[1].max()*1.1] + 
-												[
-													self.signal_intensity(np.linspace(theta_zeros[k],theta_zeros[k+1]))[1].max()*1.1
-													for k in range(len(theta_zeros)-1)
-												]
-											  ), 
-								  N = n_samples
-								)
-		phi_signal_samples = np.random.rand(n_samples)*2*np.pi
-		return phi_signal_samples, theta_signal_samples
+	def observed_W(self, theta = None):
+		# The parameter "theta" is the detector angle.
+		theta, W1_indep = self.W_as_function_of_independent_theta(independent_theta_vals = theta, branch = 'branch_1')
+		theta, W2_indep = self.W_as_function_of_independent_theta(independent_theta_vals = theta, branch = 'branch_2')
+		theta, W1_dep = self.W_as_function_of_dependent_theta(dependent_theta_vals = theta, branch = 'branch_1')
+		theta, W2_dep = self.W_as_function_of_dependent_theta(dependent_theta_vals = theta, branch = 'branch_2')
+		if self.independent_theta_name == 'theta_s':
+			W_photons = W1_indep + W2_indep
+			W_dark_photons = W1_dep + W2_dep
+		else:
+			W_photons = W1_dep + W2_dep
+			W_dark_photons = W1_indep + W2_indep
+		return theta, W_photons, W_dark_photons, W1_indep, W2_indep, W1_dep, W2_dep
 	
-	def theta_idler(self, theta_signal):
-		omega_pump = 2*np.pi*const.c/self.lambda_pump
-		return np.arcsin(self.alpha*self.n_signal/np.sqrt((1-self.alpha)**2 - self.dark_photon_mass**2*const.c**4/omega_pump**2/const.hbar**2)*np.sin(theta_signal))
-	
+	def plot_W_in_thetas_space(self, theta_s=None, theta_i=None):
+		if theta_s is None:
+			theta_s = np.linspace(0,180/180*np.pi,999)
+		if theta_i is None:
+			theta_i = np.linspace(0,180/180*np.pi,999)
+		return plot_W_in_thetas_space(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi, theta_s, theta_i)
