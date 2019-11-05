@@ -18,13 +18,15 @@ from darmat.dSPDC import dSPDC
 import matplotlib.pyplot as plt
 import numpy as np
 
-LAMBDA_PUMP = 1000e-9
-CRYSTAL_L = .007e-3
-N_PUMP = 1.5
-N_SIGNAL = 2.5
+LAMBDA_PUMP = 405e-9
+CRYSTAL_L = .3e-3
+N_SIGNAL = 1.67
 N_IDLER = N_SIGNAL
-ALPHA = .5
-DARK_PHOTON_MASS = .8e-37
+N_PUMP = 1.55
+ALPHA = .82
+DARK_PHOTON_MASS = 0#.8e-37
+
+THETA_VALS = np.linspace(0/180*np.pi,180/180*np.pi,1e6)
 
 spdc = SPDC(
 				lambda_pump = LAMBDA_PUMP, 
@@ -35,108 +37,30 @@ spdc = SPDC(
 				alpha = ALPHA
 			)
 
-print(spdc.theta_idler(5*np.pi/180)*180/np.pi)
-
-fig, ax = plt.subplots()
-fig.suptitle('SPDC intensity')
-ax.set_xlabel('Signal angle (degrees)')
-ax.set_ylabel(r'$\propto W_{12}$')
-
-q_zeros, theta_zeros = spdc.theta_signal_zeros()
-for k,t in enumerate(theta_zeros):
-	ax.plot([t*180/np.pi]*2, [0,1], color = (.8,.8,1))
-	ax.text(t*180/np.pi, 1, str(q_zeros[k]), color = (.8,.8,1))
-
-ax.plot(
-		spdc.theta_signal_phasematch*180/np.pi*np.array([1,1]),
-		[0, 1],
-		color = (0,.8,0),
-		label = 'Phase matching angle'
-	   )
-
-ax.plot(
-		[180/np.pi*spdc.theta_signal_cutoff]*2,
-		[0,1],
-		linestyle = '--',
-		color = (0,0,0),
-		label = 'Cutoff angle'
-	   )
-
-theta, intensity = spdc.intensity()
-ax.plot(theta*180/np.pi,
-		intensity,
-		label = 'SPDC'
-		)
-
-ax.legend()
-
-fig, ax = plt.subplots()
-fig.suptitle('SPDC samples')
-ax.set_xlabel(r'$\theta_s$')
-phi_samples, theta_samples = np.array(spdc.signal_samples(9999))*180/np.pi
-ax.hist(
-		theta_samples,
-		bins = 'auto',
-	   )
-ax.set_yscale('log')
-
-########################################################################
-
 dspdc = dSPDC(
 				lambda_pump = LAMBDA_PUMP, 
 				crystal_l = CRYSTAL_L, 
 				n_pump = N_PUMP, 
 				n_signal = N_SIGNAL, 
-				alpha = ALPHA, 
-				dark_photon_mass = DARK_PHOTON_MASS
+				m_dark_photon = DARK_PHOTON_MASS, 
+				alpha = ALPHA
 			)
 
-print(dspdc.theta_idler(18*np.pi/180)*180/np.pi)
-
 fig, ax = plt.subplots()
-fig.suptitle('Dark SPDC intensity')
-ax.set_xlabel('Signal angle (degrees)')
+fig.suptitle('Total photons detected')
+ax.set_xlabel('Detector angle (degrees)')
+theta, total_W, W1_indep, W2_indep, W1_dep, W2_dep = spdc.observed_W(theta = THETA_VALS)
+ax.plot(theta*180/np.pi, total_W, label = 'Photons SPDC')
+theta, W_photons, W_dark_photons, W1_indep, W2_indep, W1_dep, W2_dep = dspdc.observed_W(theta = THETA_VALS)
+ax.plot(theta*180/np.pi, W_photons, label = 'Photons dSPDC')
 ax.set_ylabel(r'$\propto W_{12}$')
-
-q_zeros, theta_zeros = dspdc.theta_signal_zeros()
-for k,t in enumerate(theta_zeros):
-	ax.plot([t*180/np.pi]*2, [0,1], color = (.8,.8,1))
-	ax.text(t*180/np.pi, 1, str(q_zeros[k]), color = (.8,.8,1))
-
-ax.plot(
-		dspdc.theta_signal_phasematch*180/np.pi*np.array([1,1]),
-		[0, 1],
-		color = (0,.8,0),
-		label = 'Phase matching angle'
-	   )
-
-ax.plot(
-		[180/np.pi*dspdc.theta_signal_cutoff]*2,
-		[0,1],
-		linestyle = '--',
-		color = (0,0,0),
-		label = 'Cutoff angle'
-	   )
-
-theta, intensity = dspdc.intensity()
-ax.plot(theta*180/np.pi,
-		intensity,
-		label = 'SPDC'
-		)
-
 ax.legend()
-
-fig, ax = plt.subplots()
-fig.suptitle('Dark SPDC samples')
-ax.set_xlabel(r'$\theta_s$')
-phi_samples, theta_samples = np.array(dspdc.signal_samples(9999))*180/np.pi
-ax.hist(
-		theta_samples,
-		bins = 'auto',
-	   )
 ax.set_yscale('log')
+ax.grid(which='both')
 
-	
+spdc.plot_W_in_thetas_space().suptitle('SPDC')
+dspdc.plot_W_in_thetas_space().suptitle('dSPDC')
+
 plt.show()
 
 ```
