@@ -491,8 +491,13 @@ class new_dSPDC:
 		theta, W2_indep = self.W_as_function_of_independent_theta(independent_theta_vals = theta, branch = 'branch_2')
 		theta, W1_dep = self.W_as_function_of_dependent_theta(dependent_theta_vals = theta, branch = 'branch_1')
 		theta, W2_dep = self.W_as_function_of_dependent_theta(dependent_theta_vals = theta, branch = 'branch_2')
-		total_W = W1_indep + W2_indep + W1_dep + W2_dep
-		return theta, total_W, W1_indep, W2_indep, W1_dep, W2_dep
+		if self.independent_theta_name == 'theta_s':
+			W_photons = W1_indep + W2_indep
+			W_dark_photons = W1_dep + W2_dep
+		else:
+			W_photons = W1_dep + W2_dep
+			W_dark_photons = W1_indep + W2_indep
+		return theta, W_photons, W_dark_photons, W1_indep, W2_indep, W1_dep, W2_dep
 	
 	def plot_W_in_thetas_space(self, theta_s=None, theta_i=None):
 		if theta_s is None:
