@@ -27,7 +27,6 @@ class dSPDC:
 		
 		radicando = (1-alpha)**2 - m_dark_photon**2*const.c**4/self.omega_pump**2/const.hbar**2
 		self.Xi = radicando**.5 if radicando >= 0 else float('nan')
-		print('Xi = ' + str(self.Xi))
 		self.a = alpha*n_signal/self.Xi
 		
 		self.independent_theta_name = theta_name(self.a).get('independent')
