@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.constants as const
+import matplotlib.colors as colors
 
 def sinc(x):
 	return np.sinc(x/np.pi)
@@ -120,10 +121,7 @@ def plot_W_in_thetas_space(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, 
 	fig, ax = plt.subplots()
 	ax.set_xlabel(r'$\theta _s$ (deg)')
 	ax.set_ylabel(r'$\theta _i$ (deg)')
-	cs = ax.pcolormesh(
-			   ts*180/np.pi,
-			   ti*180/np.pi,
-			   W_in_thetas_space(
+	Z = W_in_thetas_space(
 								  lambda_pump = lambda_pump, 
 								  crystal_l = crystal_l, 
 								  n_pump = n_pump, 
@@ -132,10 +130,15 @@ def plot_W_in_thetas_space(lambda_pump, crystal_l, n_pump, n_signal, alpha, Xi, 
 								  Xi = Xi, 
 								  theta_s = ts, 
 								  theta_i = ti
-								), 
-			   cmap = 'coolwarm',
-			   vmin = 0,
-			   vmax = 1,
+								)
+	cs = ax.pcolormesh(
+			   ts*180/np.pi,
+			   ti*180/np.pi,
+			   Z, 
+			   cmap = 'Blues_r',
+			   norm = colors.LogNorm(vmin=Z.min(), vmax=Z.max()),
+			   # ~ vmin = 0,
+			   # ~ vmax = 1,
 			   rasterized = True
 			 )
 	cbar = fig.colorbar(cs)
