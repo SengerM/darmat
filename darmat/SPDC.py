@@ -73,6 +73,13 @@ class SPDC:
 		total_W = W1_indep + W2_indep + W1_dep + W2_dep
 		return theta, total_W, W1_indep, W2_indep, W1_dep, W2_dep
 	
+	def f_factor(self, theta = None):
+		theta_vals, f_SPDC, _, _, _, _ = self.observed_W(theta)
+		if theta is None:
+			return theta_vals, f_SPDC
+		else:
+			return f_SPDC
+	
 	def plot_W_in_thetas_space(self, theta_s=None, theta_i=None):
 		if theta_s is None:
 			theta_s = np.linspace(0,180/180*np.pi,999)
