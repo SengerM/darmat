@@ -86,7 +86,7 @@ class dSPDC:
 		if theta is None:
 			return theta_vals, f_dSPDC
 		else:
-			return f_SPDC
+			return f_dSPDC
 	
 	def plot_W_in_thetas_space(self, theta_s=None, theta_i=None):
 		if theta_s is None:
