@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.constants as const
 import matplotlib.colors as colors
+import numbers
 
 def sinc(x):
 	return np.sinc(x/np.pi)
@@ -110,6 +111,10 @@ def W_in_branch_as_function_of_dependent_theta(lambda_pump, crystal_l, n_pump, n
 								Xi, 
 								independent_theta_vals[1],
 								branch)
+	if isinstance(W_first_half, numbers.Number):
+		W_first_half = [W_first_half]
+	if isinstance(W_second_half, numbers.Number):
+		W_second_half = [W_second_half]
 	W = [w1+w2 for w1,w2 in zip(W_first_half,W_second_half)]
 	return W, theta_name(a).get('dependent')
 
