@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import scipy.constants as const
 import matplotlib.colors as colors
 import numbers
+import warnings
 
 def sinc(x):
 	return np.sinc(x/np.pi)
@@ -262,3 +263,42 @@ def polarization_Upsilon(theta_s, theta_i, phi_s, phi_i, theta_s_dipole, phi_s_d
 		return np.sin(np.arccos(np.dot(ks,ds)))**2*((m_dark_photon*const.c**2/omega_i/const.hbar)**2*np.cos(np.arccos(np.dot(ki,di)))**2 + (m_dark_photon*const.c**2/omega_i/const.hbar)**4*np.sin(np.arccos(np.dot(ki,di)))**2)
 	else:
 		raise ValueError('Cannot understand what you want from the given parameters')
+
+def get_events_at_theta_detector(theta_d, a):
+	# a = alpha*ns/Xi
+	with warnings.catch_warnings():
+		warnings.filterwarnings('ignore', r'invalid value encountered in arcsin')
+		# https://stackoverflow.com/questions/29347987/why-cant-i-suppress-numpy-warnings
+		events = [
+			(theta_d, np.arcsin(a*np.sin(theta_d))), 
+			(np.arcsin(a**-1*np.sin(theta_d)),theta_d), 
+			(theta_d, np.pi - np.arcsin(a*np.sin(theta_d))), 
+			(np.pi - np.arcsin(a**-1*np.sin(theta_d)), theta_d)
+		]
+	return events
+
+########################################################################
+
+if __name__ == '__main__':
+	theta_d = 10*np.pi/180
+	a = .5
+	
+	fig, ax = plt.subplots()
+	
+	for branch in ['branch_1', 'branch_2']:
+		dependent_theta_vals, dependent_theta_name = dependent_theta_from_independent_theta(
+																a = a, 
+																independent_theta = np.linspace(0,np.pi), 
+																branch = branch)
+		if dependent_theta_name == 'theta_i':
+			ax.plot(np.linspace(0,np.pi)*180/np.pi, dependent_theta_vals*180/np.pi, color = (0,0,0), linestyle = '--')
+		if dependent_theta_name == 'theta_s':
+			ax.plot(dependent_theta_vals*180/np.pi, np.linspace(0,np.pi)*180/np.pi, color = (0,0,0), linestyle = '--')
+	
+	for event in get_events_at_theta_detector(theta_d, a):
+		ax.plot([event[0]*180/np.pi], [event[1]*180/np.pi], marker='o', color=(0,0,0))
+	
+	ax.plot([0,180], [theta_d*180/np.pi, theta_d*180/np.pi], linestyle='--', color=(0,0,0))
+	ax.plot([theta_d*180/np.pi, theta_d*180/np.pi], [0,180], linestyle='--', color=(0,0,0))
+	
+	plt.show()
