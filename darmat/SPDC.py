@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.constants as const
-from .common_functions import W_in_branch_as_function_of_independent_theta, W_in_branch_as_function_of_dependent_theta, Xi, plot_W_in_thetas_space, polarization_Upsilon, events_seen_by_single_photon_detector, phase_matching_sinc
+from .common_functions import W_in_branch_as_function_of_independent_theta, W_in_branch_as_function_of_dependent_theta, Xi, plot_W_in_thetas_space, polarization_Upsilon, SPDC_events_seen_by_single_photon_detector, phase_matching_sinc
 from .crystal import Crystal
 import numbers
 
@@ -84,10 +84,11 @@ class SPDC:
 				n_idler = self.crystal.n(wavelength = self.lambda_pump/(1-alpha_d)), 
 				alpha = alpha_d
 			)
-			SPDC_events = events_seen_by_single_photon_detector(
+			SPDC_events = SPDC_events_seen_by_single_photon_detector(
 				theta_d = theta_d, 
 				phi_d = phi_d, 
-				alpha_d = alpha_d, 
+				omega_d = self.omega_pump*alpha_d, 
+				omega_p = self.omega_pump,
 				a = alpha_d*self.crystal.n(wavelength = self.lambda_pump*alpha_d)/_Xi
 			)
 			intensities = []

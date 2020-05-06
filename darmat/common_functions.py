@@ -4,6 +4,7 @@ import scipy.constants as const
 import matplotlib.colors as colors
 import numbers
 import warnings
+from .emission_events import SPDCEvent
 
 def sinc(x):
 	return np.sinc(x/np.pi)
@@ -264,18 +265,43 @@ def polarization_Upsilon(theta_s, theta_i, phi_s, phi_i, theta_s_dipole, phi_s_d
 	else:
 		raise ValueError('Cannot understand what you want from the given parameters')
 
-def events_seen_by_single_photon_detector(theta_d, phi_d, alpha_d, a):
+def SPDC_events_seen_by_single_photon_detector(theta_d, phi_d, omega_d, omega_p, a):
 	# See my notes on May 6 2020.
 	# a = alpha*ns/Xi.
-	if not isinstance(theta_d, numbers.Number) or not isinstance(phi_d, numbers.Number) or not isinstance(alpha_d, numbers.Number) or not isinstance(a, numbers.Number):
+	if not isinstance(theta_d, numbers.Number) or not isinstance(phi_d, numbers.Number) or not isinstance(omega_d, numbers.Number) or not isinstance(omega_p, numbers.Number) or not isinstance(a, numbers.Number):
 		raise ValueError('This function does not operate through arrays, only single numbers')
 	with warnings.catch_warnings(): # https://stackoverflow.com/questions/29347987/why-cant-i-suppress-numpy-warnings
 		warnings.filterwarnings('ignore', r'invalid value encountered in arcsin')
+		alpha_d = omega_d/omega_p
 		events = [
-			{'theta_s': theta_d, 'theta_i': np.arcsin(a*np.sin(theta_d)), 'phi_s': phi_d, 'alpha': alpha_d}, 
-			{'theta_s': np.arcsin(a**-1*np.sin(theta_d)), 'theta_i': theta_d, 'phi_s': phi_d + np.pi, 'alpha': 1 - alpha_d},
-			{'theta_s': theta_d, 'theta_i': np.pi - np.arcsin(a*np.sin(theta_d)), 'phi_s': phi_d, 'alpha': alpha_d}, 
-			{'theta_s': np.pi - np.arcsin(a**-1*np.sin(theta_d)), 'theta_i': theta_d, 'phi_s': phi_d + np.pi, 'alpha': 1 - alpha_d}
+			SPDCEvent(
+				theta_s = theta_d, 
+				phi_s = phi_d, 
+				omega_s = omega_p*alpha_d, 
+				theta_i = np.arcsin(a*np.sin(theta_d)), 
+				omega_p = omega_p
+			),
+			SPDCEvent(
+				theta_s = np.arcsin(a**-1*np.sin(theta_d)), 
+				phi_i = phi_d, 
+				omega_s = omega_p*(1-alpha_d), 
+				theta_i = theta_d, 
+				omega_p = omega_p
+			),
+			SPDCEvent(
+				theta_s = theta_d, 
+				phi_s = phi_d, 
+				omega_s = omega_p*alpha_d, 
+				theta_i = np.pi - np.arcsin(a*np.sin(theta_d)), 
+				omega_p = omega_p
+			),
+			SPDCEvent(
+				theta_s = np.pi - np.arcsin(a**-1*np.sin(theta_d)), 
+				phi_i = phi_d, 
+				omega_s = omega_p*(1-alpha_d), 
+				theta_i = theta_d, 
+				omega_p = omega_p
+			),
 		]
 	return events
 
@@ -283,7 +309,9 @@ def events_seen_by_single_photon_detector(theta_d, phi_d, alpha_d, a):
 
 if __name__ == '__main__':
 	theta_d = 24*np.pi/180
-	alpha_d = .4
+	omega_p = 405e-9
+	omega_d = omega_p/2
+	alpha_d = omega_d/omega_p
 	phi_d = 0
 	a = .5
 	
@@ -299,7 +327,7 @@ if __name__ == '__main__':
 		if dependent_theta_name == 'theta_s':
 			ax.plot(dependent_theta_vals*180/np.pi, np.linspace(0,np.pi)*180/np.pi, color = (0,0,0), linestyle = '--')
 	
-	for event in events_seen_by_single_photon_detector(theta_d, phi_d, alpha_d, a):
+	for event in SPDC_events_seen_by_single_photon_detector(theta_d, phi_d, omega_d, omega_p, a):
 		ax.plot([event.get('theta_s')*180/np.pi], [event.get('theta_i')*180/np.pi], marker='o', color=(0,0,0))
 	
 	ax.plot([0,180], [theta_d*180/np.pi, theta_d*180/np.pi], linestyle='--', color=(0,0,0))
