@@ -241,3 +241,24 @@ def Xi(n_idler = None, alpha = None, m_dark_photon = None, omega_p = None):
 		return ((1-alpha)**2 - m_dark_photon**2*const.c**4/const.hbar**2/omega_p**2)
 	else:
 		raise ValueError('Cannot understand what you want from the given parameters')
+
+def phase_matching_sinc(theta_s, theta_i, alpha, l, lambda_p, n_pump, n_signal, Xi):
+	return np.sinc(np.pi*l/lambda_p*(n_pump - alpha*n_signal*np.cos(theta_s) - Xi*np.cos(theta_i)))**2
+
+def polarization_Upsilon(theta_s, theta_i, phi_s, phi_i, theta_s_dipole, phi_s_dipole, theta_i_dipole, phi_i_dipole, m_dark_photon = None, omega_i = None):
+	# This is the function I defined in my notes on May 5 2020
+	
+	def polar2cartessian(theta, phi):
+		return np.array((np.sin(theta)*np.cos(phi), np.sin(theta)*np.sin(phi), np.cos(theta)))
+	
+	ks = polar2cartessian(theta_s, phi_s)
+	ki = polar2cartessian(theta_i, phi_i)
+	ds = polar2cartessian(theta_s_dipole, phi_s_dipole)
+	di = polar2cartessian(theta_i_dipole, phi_i_dipole)
+	
+	if m_dark_photon == None and omega_i == None: # We are in the SPDC situation
+		return np.sin(np.arccos(np.dot(ks,ds)))**2*np.sin(np.arccos(np.dot(ki,di)))**2
+	elif m_dark_photon != None and omega_i != None: # We are in the dSPDC situation
+		return np.sin(np.arccos(np.dot(ks,ds)))**2*((m_dark_photon*const.c**2/omega_i/const.hbar)**2*np.cos(np.arccos(np.dot(ki,di)))**2 + (m_dark_photon*const.c**2/omega_i/const.hbar)**4*np.sin(np.arccos(np.dot(ki,di)))**2)
+	else:
+		raise ValueError('Cannot understand what you want from the given parameters')
