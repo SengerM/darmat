@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
 	name="darmat",
-	version="1",
+	version="2.0",
 	author="Matias H. Senger",
 	author_email="m.senger@hotmail.com",
 	description="DarMat Experiment package",
