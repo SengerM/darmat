@@ -233,3 +233,11 @@ def dependent_theta_from_independent_theta(a, independent_theta, branch):
 		return dependent_theta_from_independent_theta_in_branch_2(a, independent_theta)
 
 # Theta relating functions ↑ -------------------------------------------
+
+def Xi(n_idler = None, alpha = None, m_dark_photon = None, omega_p = None):
+	if  n_idler != None and alpha != None and m_dark_photon == None and omega_p == None: # This means that we are in the SPDC case.
+		return n_idler*(1-alpha)
+	elif m_dark_photon != None and omega_p != None and alpha != None and n_idler == None: # This means that we are in the dSPDC case.
+		return ((1-alpha)**2 - m_dark_photon**2*const.c**4/const.hbar**2/omega_p**2)
+	else:
+		raise ValueError('Cannot understand what you want from the given parameters')
