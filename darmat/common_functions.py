@@ -267,6 +267,8 @@ def polarization_Upsilon(theta_s, theta_i, phi_s, phi_i, theta_s_dipole, phi_s_d
 def events_seen_by_single_photon_detector(theta_d, phi_d, alpha_d, a):
 	# See my notes on May 6 2020.
 	# a = alpha*ns/Xi.
+	if not isinstance(theta_d, numbers.Number) or not isinstance(phi_d, numbers.Number) or not isinstance(alpha_d, numbers.Number) or not isinstance(a, numbers.Number):
+		raise ValueError('This function does not operate through arrays, only single numbers')
 	with warnings.catch_warnings(): # https://stackoverflow.com/questions/29347987/why-cant-i-suppress-numpy-warnings
 		warnings.filterwarnings('ignore', r'invalid value encountered in arcsin')
 		events = [
