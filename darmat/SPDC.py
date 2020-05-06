@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.constants as const
-from .common_functions import W_in_branch_as_function_of_independent_theta, W_in_branch_as_function_of_dependent_theta, Xi, plot_W_in_thetas_space
+from .common_functions import W_in_branch_as_function_of_independent_theta, W_in_branch_as_function_of_dependent_theta, Xi, plot_W_in_thetas_space, polarization_Upsilon, events_seen_by_single_photon_detector, phase_matching_sinc
 from .crystal import Crystal
+import numbers
 
 class SPDC:
-	def __init__(self, lambda_pump, crystal):
+	def __init__(self, lambda_pump, crystal, theta_s_dipole = None, phi_s_dipole = None, theta_i_dipole = None, phi_i_dipole = None):
 		if lambda_pump < 0:
 			raise ValueError('The value of "lambda_pump" must be positive.')
 		if not isinstance(crystal, Crystal):
@@ -14,6 +15,10 @@ class SPDC:
 		self.lambda_pump = lambda_pump # In meters.
 		self.crystal = crystal
 		self.omega_pump = 2*np.pi*const.c/lambda_pump
+		self.theta_s_dipole = theta_s_dipole, 
+		self.phi_s_dipole = phi_s_dipole, 
+		self.theta_i_dipole = theta_i_dipole, 
+		self.phi_i_dipole = phi_i_dipole
 		
 	def W_as_function_of_independent_theta(self, independent_theta_vals, branch, alpha):
 		W, independent_theta_name = W_in_branch_as_function_of_independent_theta(
@@ -71,4 +76,40 @@ class SPDC:
 			theta_s = theta_s, 
 			theta_i = theta_i
 		)
-
+	
+	def single_photon_intensity(self, theta_d = None, phi_d = None, lambda_d = None):
+		if isinstance(theta_d, numbers.Number) and isinstance(phi_d, numbers.Number) and isinstance(lambda_d, numbers.Number):
+			alpha_d = self.lambda_pump/lambda_d
+			_Xi = Xi(
+				n_idler = self.crystal.n(wavelength = self.lambda_pump/(1-alpha_d)), 
+				alpha = alpha_d
+			)
+			SPDC_events = events_seen_by_single_photon_detector(
+				theta_d = theta_d, 
+				phi_d = phi_d, 
+				alpha_d = alpha_d, 
+				a = alpha_d*self.crystal.n(wavelength = self.lambda_pump*alpha_d)/_Xi
+			)
+			intensities = []
+			for event in SPDC_events:
+				intensities.append(
+					phase_matching_sinc(
+						theta_s = event.get('theta_s'), 
+						theta_i = event.get('theta_i'), 
+						alpha = event.get('alpha'), 
+						crystal_l = self.crystal.crystal_length, 
+						lambda_p = self.lambda_pump, 
+						n_pump = self.crystal.n(wavelength = self.lambda_pump), 
+						n_signal = self.crystal.n(wavelength = self.lambda_pump/event.get('alpha')), 
+						Xi = _Xi
+					)
+				)
+			return np.nansum(intensities)
+		elif all([hasattr(param, '__iter__') for param in [theta_d, phi_d, lambda_d]]): # if all the parameters are lists
+			if len(theta_d) == len(phi_d) == len(lambda_d):
+				intensities = []
+				for t,p,l in zip(theta_d,phi_d,lambda_d):
+					intensities.append(self.single_photon_intensity(t,p,l))
+				return intensities
+		else:
+			raise NotImplementedError('The combination of parameters you gave me is not yet implemented, sorry')
