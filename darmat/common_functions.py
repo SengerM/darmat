@@ -242,11 +242,11 @@ def Xi(n_idler = None, alpha = None, m_dark_photon = None, omega_p = None):
 	else:
 		raise ValueError('Cannot understand what you want from the given parameters')
 
-def phase_matching_sinc(theta_s, theta_i, alpha, l, lambda_p, n_pump, n_signal, Xi):
-	return np.sinc(np.pi*l/lambda_p*(n_pump - alpha*n_signal*np.cos(theta_s) - Xi*np.cos(theta_i)))**2
+def phase_matching_sinc(theta_s, theta_i, alpha, crystal_l, lambda_p, n_pump, n_signal, Xi):
+	return np.sinc(np.pi*crystal_l/lambda_p*(n_pump - alpha*n_signal*np.cos(theta_s) - Xi*np.cos(theta_i)))**2
 
 def polarization_Upsilon(theta_s, theta_i, phi_s, phi_i, theta_s_dipole, phi_s_dipole, theta_i_dipole, phi_i_dipole, m_dark_photon = None, omega_i = None):
-	# This is the function I defined in my notes on May 5 2020
+	# This is the function I defined in my notes on May 5 2020.
 	
 	def polar2cartessian(theta, phi):
 		return np.array((np.sin(theta)*np.cos(phi), np.sin(theta)*np.sin(phi), np.cos(theta)))
