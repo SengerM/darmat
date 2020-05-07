@@ -4,7 +4,7 @@ import scipy.constants as const
 from .common_functions import W_in_branch_as_function_of_independent_theta, W_in_branch_as_function_of_dependent_theta, Xi, plot_W_in_thetas_space, polarization_Upsilon, SPDC_events_seen_by_single_photon_detector, phase_matching_sinc
 from .crystal import Crystal
 import numbers
-
+from .emission_events import Photon
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.constants as const
@@ -95,47 +95,38 @@ class OldSPDC:
 		return plot_W_in_thetas_space(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi, theta_s, theta_i)
 
 class SPDC:
-	def __init__(self, lambda_pump, crystal, theta_s_dipole = None, phi_s_dipole = None, theta_i_dipole = None, phi_i_dipole = None):
+	def __init__(self, lambda_pump, crystal):
 		if lambda_pump < 0:
 			raise ValueError('The value of "lambda_pump" must be positive.')
 		if not isinstance(crystal, Crystal):
 			raise ValueError('"crystal" must be an instance of the Crystal class')
 		
-		self.lambda_pump = lambda_pump # In meters.
+		self.photon_pump = Photon(theta=0, phi=0, wavelength=lambda_pump)
 		self.crystal = crystal
-		self.omega_pump = 2*np.pi*const.c/lambda_pump
-		self.theta_s_dipole = theta_s_dipole, 
-		self.phi_s_dipole = phi_s_dipole, 
-		self.theta_i_dipole = theta_i_dipole, 
-		self.phi_i_dipole = phi_i_dipole
 		
 	def single_photon_intensity(self, theta_d = None, phi_d = None, lambda_d = None):
 		if isinstance(theta_d, numbers.Number) and isinstance(phi_d, numbers.Number) and isinstance(lambda_d, numbers.Number):
-			alpha_d = self.lambda_pump/lambda_d
-			_Xi = Xi(
-				n_idler = self.crystal.n(wavelength = self.lambda_pump/(1-alpha_d)), 
-				alpha = alpha_d
-			)
-			SPDC_events = SPDC_events_seen_by_single_photon_detector(
+			alpha_d = self.photon_pump.get('wavelength')/lambda_d
+			detector_compatible_SPDC_events = SPDC_events_seen_by_single_photon_detector(
 				theta_d = theta_d, 
 				phi_d = phi_d, 
-				omega_d = self.omega_pump*alpha_d, 
-				omega_p = self.omega_pump,
+				omega_d = self.photon_pump.get('omega')*alpha_d, 
+				omega_p = self.photon_pump.get('omega'),
 				crystal = self.crystal
 			)
 			intensities = []
-			for event in SPDC_events:
+			for event in detector_compatible_SPDC_events:
 				intensities.append(
 					phase_matching_sinc(
 						theta_s = event.get('theta_s'), 
 						theta_i = event.get('theta_i'), 
 						alpha = event.get('alpha'), 
 						crystal_l = self.crystal.crystal_length, 
-						lambda_p = self.lambda_pump, 
-						n_pump = self.crystal.n(wavelength = self.lambda_pump), 
-						n_signal = self.crystal.n(wavelength = self.lambda_pump/event.get('alpha')), 
+						lambda_p = self.photon_pump.get('wavelength'), 
+						n_pump = self.crystal.n(self.photon_pump), 
+						n_signal = self.crystal.n(event.photon_signal), 
 						Xi = Xi(
-							n_idler = self.crystal.n(wavelength = event.get('lambda_i')),
+							n_idler = self.crystal.n(event.photon_idler),
 							alpha = event.get('alpha')
 						)
 					)

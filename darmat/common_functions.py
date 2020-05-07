@@ -4,7 +4,7 @@ import scipy.constants as const
 import matplotlib.colors as colors
 import numbers
 import warnings
-from .emission_events import SPDCEvent
+from .emission_events import SPDCEvent, Photon
 from .crystal import Crystal
 
 def sinc(x):
@@ -274,16 +274,26 @@ def SPDC_events_seen_by_single_photon_detector(theta_d, phi_d, omega_d, omega_p,
 		warnings.filterwarnings('ignore', r'invalid value encountered in arcsin')
 		alpha_d = omega_d/omega_p
 		lambda_p = 2*np.pi*const.c/omega_p
+		detected_photon = Photon(
+			theta = theta_d, 
+			phi = phi_d, 
+			omega = omega_d
+		)
+		undetected_photon = Photon(
+			theta = 'Not yet implemented for unisotropic materials', 
+			phi = 'Not yet implemented for unisotropic materials', 
+			omega = omega_p - omega_d
+		)
 		events = [
 			SPDCEvent( # Signal detection, forward-forward.
 				theta_s = theta_d, 
 				phi_s = phi_d, 
 				omega_s = omega_p*alpha_d, 
-				theta_i = np.arcsin(alpha_d*crystal.n(wavelength=lambda_p/alpha_d)/Xi(n_idler=crystal.n(wavelength=lambda_p/(1-alpha_d)), alpha=alpha_d)*np.sin(theta_d)), 
+				theta_i = np.arcsin(alpha_d*crystal.n(detected_photon)/Xi(n_idler=crystal.n(undetected_photon), alpha=alpha_d)*np.sin(theta_d)), 
 				omega_p = omega_p
 			),
 			SPDCEvent( # Idler detection, forward-forward.
-				theta_s = np.arcsin(Xi(n_idler=crystal.n(wavelength=lambda_p/alpha_d), alpha=1-alpha_d)/(1-alpha_d)/crystal.n(wavelength=lambda_p/(1-alpha_d))*np.sin(theta_d)), 
+				theta_s = np.arcsin(Xi(n_idler=crystal.n(detected_photon), alpha=1-alpha_d)/(1-alpha_d)/crystal.n(undetected_photon)*np.sin(theta_d)), 
 				phi_i = phi_d, 
 				omega_s = omega_p - omega_d, 
 				theta_i = theta_d, 
@@ -293,11 +303,11 @@ def SPDC_events_seen_by_single_photon_detector(theta_d, phi_d, omega_d, omega_p,
 				theta_s = theta_d, 
 				phi_s = phi_d, 
 				omega_s = omega_p*alpha_d, 
-				theta_i = np.pi - np.arcsin(alpha_d*crystal.n(wavelength=lambda_p/alpha_d)/Xi(n_idler=crystal.n(wavelength=lambda_p/(1-alpha_d)), alpha=alpha_d)*np.sin(theta_d)), 
+				theta_i = np.pi - np.arcsin(alpha_d*crystal.n(detected_photon)/Xi(n_idler=crystal.n(undetected_photon), alpha=alpha_d)*np.sin(theta_d)), 
 				omega_p = omega_p
 			),
 			SPDCEvent( # Idler detection, forward-backward.
-				theta_s = np.pi - np.arcsin(Xi(n_idler=crystal.n(wavelength=lambda_p/alpha_d), alpha=1-alpha_d)/(1-alpha_d)/crystal.n(wavelength=lambda_p/(1-alpha_d))*np.sin(theta_d)), 
+				theta_s = np.pi - np.arcsin(Xi(n_idler=crystal.n(detected_photon), alpha=1-alpha_d)/(1-alpha_d)/crystal.n(undetected_photon)*np.sin(theta_d)), 
 				phi_i = phi_d, 
 				omega_s = omega_p*(1-alpha_d), 
 				theta_i = theta_d, 
