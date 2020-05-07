@@ -89,7 +89,7 @@ class SPDC:
 				phi_d = phi_d, 
 				omega_d = self.omega_pump*alpha_d, 
 				omega_p = self.omega_pump,
-				a = alpha_d*self.crystal.n(wavelength = self.lambda_pump*alpha_d)/_Xi
+				crystal = self.crystal
 			)
 			intensities = []
 			for event in SPDC_events:
@@ -102,7 +102,10 @@ class SPDC:
 						lambda_p = self.lambda_pump, 
 						n_pump = self.crystal.n(wavelength = self.lambda_pump), 
 						n_signal = self.crystal.n(wavelength = self.lambda_pump/event.get('alpha')), 
-						Xi = _Xi
+						Xi = Xi(
+							n_idler = self.crystal.n(wavelength = event.get('lambda_i')),
+							alpha = event.get('alpha')
+						)
 					)
 				)
 			return np.nansum(intensities)
