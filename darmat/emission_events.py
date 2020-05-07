@@ -2,14 +2,19 @@ import numpy as np
 import scipy.constants as const
 
 class Photon:
-	def __init__(self, theta, phi, omega=None, wavelength=None):
+	def __init__(self, theta, phi, omega=None, wavelength=None, polarization=None, **kwargs):
 		if omega == wavelength == None:
 			raise ValueError('You must specify either omega or the wavelength')
+		if not (polarization == None or (isinstance(polarization, list) and len(polarization) == 3)):
+			raise ValueError('The polarization must be specified by a [x,y,z] list')
 		self.vars = {
 			'theta': theta, 
 			'phi': phi, 
-			'omega': omega if wavelength == None else 2*const.pi*const.c/wavelength
+			'omega': omega if wavelength == None else 2*const.pi*const.c/wavelength,
+			'polarization': polarization
 		}
+		for key,val in kwargs.items():
+			self.vars[key] = val
 	
 	def get(self, what):
 		if what == 'lambda' or what == 'wavelength':
@@ -30,12 +35,14 @@ class SPDCEvent:
 		self.photon_signal = Photon(
 			theta = theta_s, 
 			phi = phi_s if phi_i == None else phi_i + np.pi, 
-			omega = omega_s
+			omega = omega_s,
+			beam_name = 'signal'
 		)
 		self.photon_idler = Photon(
 			theta = theta_i, 
 			phi = phi_i if phi_s == None else phi_s + np.pi, 
-			omega = omega_i if omega_p==None else omega_p-omega_s
+			omega = omega_i if omega_p==None else omega_p-omega_s,
+			beam_name = 'idler'
 		)
 	
 	def get(self, what):
