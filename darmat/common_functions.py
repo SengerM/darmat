@@ -5,7 +5,7 @@ import matplotlib.colors as colors
 import numbers
 import warnings
 from .emission_events import SPDCEvent, Photon
-from .crystal import Crystal
+from . import crystal as crystal_pkg
 
 def sinc(x):
 	return np.sinc(x/np.pi)
@@ -268,7 +268,7 @@ def polarization_Upsilon(theta_s, theta_i, phi_s, phi_i, theta_s_dipole, phi_s_d
 
 def SPDC_events_seen_by_single_photon_detector(theta_d, phi_d, omega_d, omega_p, crystal):
 	# See my notes on May 6 2020.
-	if not isinstance(theta_d, numbers.Number) or not isinstance(phi_d, numbers.Number) or not isinstance(omega_d, numbers.Number) or not isinstance(omega_p, numbers.Number) or not isinstance(crystal, Crystal):
+	if not isinstance(theta_d, numbers.Number) or not isinstance(phi_d, numbers.Number) or not isinstance(omega_d, numbers.Number) or not isinstance(omega_p, numbers.Number) or not isinstance(crystal, crystal_pkg.Crystal):
 		raise ValueError('This function does not operate through arrays, only single numbers')
 	with warnings.catch_warnings(): # https://stackoverflow.com/questions/29347987/why-cant-i-suppress-numpy-warnings
 		warnings.filterwarnings('ignore', r'invalid value encountered in arcsin')
@@ -284,34 +284,43 @@ def SPDC_events_seen_by_single_photon_detector(theta_d, phi_d, omega_d, omega_p,
 			phi = 'Not yet implemented for unisotropic materials', 
 			omega = omega_p - omega_d
 		)
+		pump_photon = Photon(
+			theta = 0,
+			phi = 0,
+			omega = omega_p
+		)
 		events = [
 			SPDCEvent( # Signal detection, forward-forward.
 				theta_s = theta_d, 
 				phi_s = phi_d, 
 				omega_s = omega_p*alpha_d, 
 				theta_i = np.arcsin(alpha_d*crystal.n(detected_photon)/Xi(n_idler=crystal.n(undetected_photon), alpha=alpha_d)*np.sin(theta_d)), 
-				omega_p = omega_p
+				omega_p = omega_p,
+				photon_pump = pump_photon
 			),
 			SPDCEvent( # Idler detection, forward-forward.
 				theta_s = np.arcsin(Xi(n_idler=crystal.n(detected_photon), alpha=1-alpha_d)/(1-alpha_d)/crystal.n(undetected_photon)*np.sin(theta_d)), 
 				phi_i = phi_d, 
 				omega_s = omega_p - omega_d, 
 				theta_i = theta_d, 
-				omega_p = omega_p
+				omega_p = omega_p,
+				photon_pump = pump_photon
 			),
 			SPDCEvent( # Signal detection, forward-backward.
 				theta_s = theta_d, 
 				phi_s = phi_d, 
 				omega_s = omega_p*alpha_d, 
 				theta_i = np.pi - np.arcsin(alpha_d*crystal.n(detected_photon)/Xi(n_idler=crystal.n(undetected_photon), alpha=alpha_d)*np.sin(theta_d)), 
-				omega_p = omega_p
+				omega_p = omega_p,
+				photon_pump = pump_photon
 			),
 			SPDCEvent( # Idler detection, forward-backward.
 				theta_s = np.pi - np.arcsin(Xi(n_idler=crystal.n(detected_photon), alpha=1-alpha_d)/(1-alpha_d)/crystal.n(undetected_photon)*np.sin(theta_d)), 
 				phi_i = phi_d, 
 				omega_s = omega_p*(1-alpha_d), 
 				theta_i = theta_d, 
-				omega_p = omega_p
+				omega_p = omega_p,
+				photon_pump = pump_photon
 			),
 		]
 	return events

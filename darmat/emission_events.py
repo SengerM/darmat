@@ -20,12 +20,15 @@ class Photon:
 		if what == 'lambda' or what == 'wavelength':
 			return 2*const.pi*const.c/self.get('omega')
 		return self.vars.get(what)
+	
+	def add(self, key, val):
+		self.vars[key] = val
 		
 	def __str__(self):
 		return 'Photon: theta=' + str(self.get('theta')*180/np.pi) + ' deg, phi=' + str(self.get('phi')*180/np.pi) + ' deg, lambda=' + str(const.c/self.get('omega')*2*const.pi*1e9) + ' nm'
 
 class SPDCEvent:
-	def __init__(self, theta_s, omega_s, theta_i, phi_s=None, phi_i=None, omega_i=None, omega_p=None):
+	def __init__(self, photon_pump: Photon, theta_s, omega_s, theta_i, phi_s=None, phi_i=None, omega_i=None, omega_p=None):
 		if omega_i == omega_p == None:
 			raise ValueError('Must specify at least one of omega_i or omega_p')
 		if phi_s == phi_i == None:
@@ -44,12 +47,16 @@ class SPDCEvent:
 			omega = omega_i if omega_p==None else omega_p-omega_s,
 			beam_name = 'idler'
 		)
+		self.photon_pump = photon_pump
+		self.photon_pump.add('beam_name', 'pump')
 	
 	def get(self, what):
 		if what[-1] == 's':
 			return self.photon_signal.get(what[:-2])
 		elif what[-1] == 'i':
 			return self.photon_idler.get(what[:-2])
+		elif what[-1] == 'p':
+			return self.photon_pump.get(what[:-2])
 		elif what == 'alpha':
 			ws = self.photon_signal.get('omega')
 			wi = self.photon_idler.get('omega')

@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.constants as const
-from .common_functions import W_in_branch_as_function_of_independent_theta, W_in_branch_as_function_of_dependent_theta, Xi, plot_W_in_thetas_space, polarization_Upsilon, SPDC_events_seen_by_single_photon_detector, phase_matching_sinc
 from .crystal import Crystal
 import numbers
 from .emission_events import Photon
@@ -117,19 +116,7 @@ class SPDC:
 			intensities = []
 			for event in detector_compatible_SPDC_events:
 				intensities.append(
-					phase_matching_sinc(
-						theta_s = event.get('theta_s'), 
-						theta_i = event.get('theta_i'), 
-						alpha = event.get('alpha'), 
-						crystal_l = self.crystal.crystal_length, 
-						lambda_p = self.photon_pump.get('wavelength'), 
-						n_pump = self.crystal.n(self.photon_pump), 
-						n_signal = self.crystal.n(event.photon_signal), 
-						Xi = Xi(
-							n_idler = self.crystal.n(event.photon_idler),
-							alpha = event.get('alpha')
-						)
-					)
+					self.crystal.SPDC_intensity(event)
 				)
 			return np.nansum(intensities)
 		elif all([hasattr(param, '__iter__') for param in [theta_d, phi_d, lambda_d]]): # if all the parameters are lists
