@@ -119,7 +119,7 @@ class SPDC:
 					self.crystal.SPDC_intensity(event)
 				)
 			return np.nansum(intensities)
-		elif all([hasattr(param, '__iter__') for param in [theta_d, phi_d, lambda_d]]): # if all the parameters are lists
+		elif all([isinstance(param, list) for param in [theta_d, phi_d, lambda_d]]): # if all the parameters are lists
 			if len(theta_d) == len(phi_d) == len(lambda_d):
 				intensities = []
 				for t,p,l in zip(theta_d,phi_d,lambda_d):
@@ -131,5 +131,10 @@ class SPDC:
 			return self.single_photon_intensity([theta_d]*len(lambda_d), [phi_d]*len(lambda_d), lambda_d)
 		elif isinstance(theta_d, numbers.Number) and hasattr(phi_d, '__iter__') and isinstance(lambda_d, numbers.Number):
 			return self.single_photon_intensity([theta_d]*len(phi_d), phi_d, [lambda_d]*len(phi_d))
+		elif isinstance(theta_d, np.ndarray) and isinstance(lambda_d, np.ndarray) and theta_d.size == lambda_d.size and isinstance(phi_d, numbers.Number): # We have received two matrices that might have been produced using np.meshgrid()
+			f = []
+			for theta_d_row, lambda_d_row in zip(theta_d, lambda_d):
+				f.append(self.single_photon_intensity(list(theta_d_row), [phi_d]*len(theta_d_row), list(lambda_d_row)))
+			return np.array(f)
 		else:
 			raise NotImplementedError('The combination of parameters you gave me is not yet implemented, sorry')
