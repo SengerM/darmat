@@ -126,7 +126,7 @@ class SPDC:
 					intensities.append(self.single_photon_intensity(t,p,l))
 				return np.array(intensities)
 		elif hasattr(theta_d, '__iter__') and isinstance(phi_d, numbers.Number) and isinstance(lambda_d, numbers.Number):
-			return self.single_photon_intensity(theta_d, [phi_d]*len(theta_d), [lambda_d]*len(theta_d))
+			return self.single_photon_intensity(list(theta_d), [phi_d]*len(theta_d), [lambda_d]*len(theta_d))
 		elif isinstance(theta_d, numbers.Number) and isinstance(phi_d, numbers.Number) and hasattr(lambda_d, '__iter__'):
 			return self.single_photon_intensity([theta_d]*len(lambda_d), [phi_d]*len(lambda_d), lambda_d)
 		elif isinstance(theta_d, numbers.Number) and hasattr(phi_d, '__iter__') and isinstance(lambda_d, numbers.Number):
