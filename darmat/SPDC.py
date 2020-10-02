@@ -138,3 +138,69 @@ class SPDC:
 			return np.array(f)
 		else:
 			raise NotImplementedError('The combination of parameters you gave me is not yet implemented, sorry')
+
+class PhaseMatchingFactor:
+	# This was implemented for the paper on 2.oct.2020.
+	def __init__(self, lambda_pump: float, crystal_l: float, n_pump: float, n_signal: float, n_idler: float):
+		if n_pump < 0 or n_signal < 0 or n_idler < 0:
+			raise ValueError('Negative refractive index received! I do not support this...')
+		if crystal_l < 0:
+			raise ValueError('The value of "crystal_l" must be positive.')
+		if lambda_pump < 0:
+			raise ValueError('The value of "lambda_pump" must be positive.')
+		
+		self.lambda_pump = lambda_pump
+		self.crystal_l = crystal_l
+		self.n_pump = n_pump
+		self.n_signal = n_signal
+		self.n_idler = n_idler
+		
+	
+	@property
+	def lambda_pump(self):
+		return self._lambda_pump
+	@lambda_pump.setter
+	def lambda_pump(self, x):
+		self._lambda_pump = x
+	
+	@property
+	def crystal_l(self):
+		return self._crystal_l
+	@crystal_l.setter
+	def crystal_l(self, x):
+		self._crystal_l = x
+	
+	@property
+	def n_pump(self):
+		return self._n_pump
+	@n_pump.setter
+	def n_pump(self, x):
+		self._n_pump = x
+	
+	@property
+	def n_signal(self):
+		return self._n_signal
+	@n_signal.setter
+	def n_signal(self, x):
+		self._n_signal = x
+	
+	@property
+	def n_idler(self):
+		return self._n_idler
+	@n_idler.setter
+	def n_idler(self, x):
+		self._n_idler = x
+	
+	def prob_density(self, alpha, theta, phi):
+		l = self.crystal_l
+		n_s = self.n_signal
+		n_p = self.n_pump
+		n_i = self.n_idler
+		λp = self.lambda_pump
+		wp = 2*np.pi/λp
+		Xi = n_i*(1-alpha)
+		radicando_mistico = Xi**2-alpha**2*n_s**2*np.sin(theta)**2
+		radicando_mistico[radicando_mistico<0] = float('NaN')
+		sinc1 = sinc(np.pi*l/λp*(alpha*n_s*np.cos(theta)+radicando_mistico**.5-n_p))
+		sinc2 = sinc(np.pi*l/λp*(alpha*n_s*np.cos(theta)-radicando_mistico**.5-n_p))
+		return (2*np.pi)**3*alpha**2*(1-alpha)*n_s**3*n_i**3*np.sin(theta)/λp/radicando_mistico**.5*(sinc1**2 + sinc2**2)
