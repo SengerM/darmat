@@ -94,3 +94,73 @@ class dSPDC:
 		if theta_i is None:
 			theta_i = np.linspace(0,180/180*np.pi,999)
 		return plot_W_in_thetas_space(self.lambda_pump, self.crystal_l, self.n_pump, self.n_signal, self.alpha, self.Xi, theta_s, theta_i)
+
+class PhaseMatchingFactor:
+	# This was implemented for the paper on 2.oct.2020.
+	def __init__(self, lambda_pump: float, crystal_l: float, n_pump: float, n_signal: float, m: float):
+		if n_pump < 0 or n_signal < 0:
+			raise ValueError('Negative refractive index received! I do not support this...')
+		if crystal_l < 0:
+			raise ValueError('The value of "crystal_l" must be positive.')
+		if lambda_pump < 0:
+			raise ValueError('The value of "lambda_pump" must be positive.')
+		if m < 0:
+			raise ValueError('The mass of the dark photon must be >= 0.')
+		
+		self.lambda_pump = lambda_pump
+		self.crystal_l = crystal_l
+		self.n_pump = n_pump
+		self.n_signal = n_signal
+		self.m = m
+	
+	@property
+	def lambda_pump(self):
+		return self._lambda_pump
+	@lambda_pump.setter
+	def lambda_pump(self, x):
+		self._lambda_pump = x
+	
+	@property
+	def crystal_l(self):
+		return self._crystal_l
+	@crystal_l.setter
+	def crystal_l(self, x):
+		self._crystal_l = x
+	
+	@property
+	def n_pump(self):
+		return self._n_pump
+	@n_pump.setter
+	def n_pump(self, x):
+		self._n_pump = x
+	
+	@property
+	def n_signal(self):
+		return self._n_signal
+	@n_signal.setter
+	def n_signal(self, x):
+		self._n_signal = x
+	
+	@property
+	def m(self):
+		return self._m
+	@m.setter
+	def m(self, x):
+		self._m = x
+	
+	def prob_density(self, alpha, theta, phi):
+		l = self.crystal_l
+		n_s = self.n_signal
+		n_p = self.n_pump
+		λp = self.lambda_pump
+		m = self.m
+		wp = 2*np.pi/λp
+		Xi = (1-alpha)**2-m**2/wp**2
+		Xi[Xi<0] = float('NaN')
+		Xi = Xi**.5
+		radicando_mistico = Xi**2-alpha**2*n_s**2*np.sin(theta)**2
+		radicando_mistico[radicando_mistico<0] = float('NaN')
+		sinc1 = sinc(np.pi*l/λp*(alpha*n_s*np.cos(theta)+radicando_mistico**.5-n_p))
+		sinc2 = sinc(np.pi*l/λp*(alpha*n_s*np.cos(theta)-radicando_mistico**.5-n_p))
+		return (2*np.pi)**3*alpha**2*(1-alpha)*n_s**3*np.sin(theta)/λp/radicando_mistico**.5*(sinc1**2 + sinc2**2)
+
