@@ -156,11 +156,11 @@ class PhaseMatchingFactor:
 		m = self.m
 		wp = 2*np.pi/λp
 		Xi = (1-alpha)**2-m**2/wp**2
-		Xi[Xi<0] = float('NaN')
+		if hasattr(Xi, '__iter__'):
+			Xi[Xi<0] = float('NaN')
 		Xi = Xi**.5
 		radicando_mistico = Xi**2-alpha**2*n_s**2*np.sin(theta)**2
 		radicando_mistico[radicando_mistico<0] = float('NaN')
 		sinc1 = sinc(np.pi*l/λp*(alpha*n_s*np.cos(theta)+radicando_mistico**.5-n_p))
 		sinc2 = sinc(np.pi*l/λp*(alpha*n_s*np.cos(theta)-radicando_mistico**.5-n_p))
 		return (2*np.pi)**3*alpha**2*(1-alpha)*n_s**3*np.sin(theta)/λp/radicando_mistico**.5*(sinc1**2 + sinc2**2)
-
