@@ -203,4 +203,4 @@ class PhaseMatchingFactor:
 		radicando_mistico[radicando_mistico<0] = float('NaN')
 		sinc1 = sinc(np.pi*l/λp*(alpha*n_s*np.cos(theta)+radicando_mistico**.5-n_p))
 		sinc2 = sinc(np.pi*l/λp*(alpha*n_s*np.cos(theta)-radicando_mistico**.5-n_p))
-		return (2*np.pi)**3*alpha**2*(1-alpha)*n_s**3*n_i**3*np.sin(theta)/λp/radicando_mistico**.5*(sinc1**2 + sinc2**2)
+		return (2*np.pi)**3*alpha**2*(1-alpha)*n_s**3*n_i**2*np.sin(theta)/λp/radicando_mistico**.5*(sinc1**2 + sinc2**2)
